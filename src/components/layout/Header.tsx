@@ -26,9 +26,12 @@ export function Header() {
           <img 
             src={HotBoxIcon} 
             alt="HotBox" 
-            className="h-8 w-8" 
+            className="h-16 w-16" 
           />
-          <span className="text-xl font-bold text-gray-900">HotBox</span>
+          <span className="text-xl font-bold">
+            <span className="text-red-600">Hot</span>
+            <span className="text-orange-500">Box</span>
+          </span>
         </Link>
 
         {/* Navigation */}
