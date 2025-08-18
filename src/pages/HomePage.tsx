@@ -2,6 +2,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ChefHat, Clock, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Button, Card, CardContent } from '../components';
+import HotBoxIcon from '../assets/images/hotbox2.png';
 
 export function HomePage() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -14,10 +15,20 @@ export function HomePage() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <section className="text-center py-16 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl">
+      <section className="text-center py-16 bg-gradient-to-r from-primary-600/80 to-primary-700/80 text-white rounded-2xl backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4">
+          {/* Logo */}
+          <div className="mb-8">
+            <img 
+              src={HotBoxIcon} 
+              alt="HotBox Logo" 
+              className="h-32 w-32 mx-auto mb-4"
+            />
+          </div>
+          
           <h1 className="text-5xl font-bold mb-6">
-            Bem-vindo ao HotBox
+            <span className="text-red-200">Hot</span>
+            <span className="text-orange-200">Box</span>
           </h1>
           <p className="text-xl mb-8 text-primary-100">
             Sabores autênticos entregues direto na sua mesa. 
@@ -42,13 +53,13 @@ export function HomePage() {
           ) : (
             <div className="space-x-4">
               <Link to="/register">
-                <Button size="lg" variant="secondary">
+                {/* <Button size="lg" variant="secondary">
                   Começar Agora <ArrowRight className="ml-2" size={20} />
-                </Button>
+                </Button> */}
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline" className="text-black border-white hover:bg-white hover:text-primary-600">
-                  Já tenho conta
+                <Button size="lg" variant="outline" className="text-red-500 border-white hover:bg-white hover:text-primary-600">
+                  Entrar
                 </Button>
               </Link>
             </div>
