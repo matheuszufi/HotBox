@@ -18,9 +18,54 @@ export function EditProfilePage() {
     defaultValues: {
       name: user?.name || '',
       phone: user?.phone || '',
+      cpf: user?.cpf || '',
       address: user?.address || '',
     },
   });
+
+  // Função para validar CPF
+  const validateCPF = (cpf: string) => {
+    // Remove pontos e traços
+    const cleanCPF = cpf.replace(/[^\d]/g, '');
+    
+    // Verifica se tem 11 dígitos
+    if (cleanCPF.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+    
+    // Validação do primeiro dígito verificador
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+    }
+    let remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cleanCPF.charAt(9))) return false;
+    
+    // Validação do segundo dígito verificador
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+    }
+    remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cleanCPF.charAt(10))) return false;
+    
+    return true;
+  };
+
+  // Função para formatar CPF
+  const formatCPF = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    if (cleanValue.length <= 11) {
+      return cleanValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2');
+    }
+    return value;
+  };
 
   const onSubmit = async (data: Partial<User>) => {
     setIsSubmitting(true);
@@ -101,18 +146,36 @@ export function EditProfilePage() {
               </div>
             </div>
 
-            <Input
-              label="Telefone"
-              type="tel"
-              placeholder="(11) 99999-9999"
-              error={errors.phone?.message}
-              {...register('phone', {
-                pattern: {
-                  value: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
-                  message: 'Formato: (11) 99999-9999',
-                },
-              })}
-            />
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input
+                label="Telefone"
+                type="tel"
+                placeholder="(11) 99999-9999"
+                error={errors.phone?.message}
+                {...register('phone', {
+                  pattern: {
+                    value: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
+                    message: 'Formato: (11) 99999-9999',
+                  },
+                })}
+              />
+
+              <Input
+                label="CPF"
+                type="text"
+                placeholder="000.000.000-00"
+                error={errors.cpf?.message}
+                {...register('cpf', {
+                  validate: (value) => {
+                    if (!value) return true; // CPF é opcional
+                    return validateCPF(value) || 'CPF inválido';
+                  },
+                })}
+                onChange={(e) => {
+                  e.target.value = formatCPF(e.target.value);
+                }}
+              />
+            </div>
 
             <Input
               label="Endereço"

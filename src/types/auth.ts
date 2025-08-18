@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: 'customer' | 'admin';
   phone?: string;
+  cpf?: string;
   address?: string;
   photoURL?: string | null;
   emailVerified: boolean;
@@ -23,6 +24,7 @@ export interface RegisterData {
   email: string;
   password: string;
   phone?: string;
+  cpf?: string;
   address?: string;
   role?: 'customer' | 'admin';
 }
