@@ -8,6 +8,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EditProfilePage } from './pages/EditProfilePage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
+import { MenuPage } from './pages/MenuPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -51,10 +52,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['customer']}>
                     <Layout>
-                      <div className="text-center py-20">
-                        <h1 className="text-2xl font-bold">Página em Desenvolvimento</h1>
-                        <p className="text-gray-600 mt-2">A página de pedidos será implementada em breve.</p>
-                      </div>
+                      <MenuPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
