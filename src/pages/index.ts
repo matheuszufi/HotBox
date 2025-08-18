@@ -3,4 +3,3 @@ export { LoginPage } from './LoginPage';
 export { RegisterPage } from './RegisterPage';
 export { DashboardPage } from './DashboardPage';
 export { EditProfilePage } from './EditProfilePage';
-export { MyOrdersPage } from './MyOrdersPage';

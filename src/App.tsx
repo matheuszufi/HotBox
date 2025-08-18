@@ -7,7 +7,6 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EditProfilePage } from './pages/EditProfilePage';
-import { MyOrdersPage } from './pages/MyOrdersPage';
 import { MenuPage } from './pages/MenuPage';
 
 // Create a client for React Query
@@ -53,17 +52,6 @@ function App() {
                   <ProtectedRoute allowedRoles={['customer']}>
                     <Layout>
                       <MenuPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/my-orders" 
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <Layout>
-                      <MyOrdersPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
