@@ -77,18 +77,58 @@ export const orderService = {
       }
 
       console.log('🔍 Buscando pedidos do usuário:', user.uid);
+      console.log('👤 Dados do usuário atual:', {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName
+      });
 
-      // Buscar pedidos do usuário no Firestore
-      const ordersQuery = query(
-        collection(db, 'orders'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
+      // Primeiro, vamos tentar buscar TODOS os documentos da coleção orders para debug
+      console.log('🔍 Verificando todos os documentos na coleção orders...');
+      const allOrdersSnapshot = await getDocs(collection(db, 'orders'));
+      console.log(`📊 Total de documentos na coleção orders: ${allOrdersSnapshot.size}`);
+      
+      allOrdersSnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log(`📄 Documento ${doc.id}:`, {
+          userId: data.userId,
+          userEmail: data.userEmail,
+          createdAt: data.createdAt,
+          total: data.total
+        });
+      });
 
-      const querySnapshot = await getDocs(ordersQuery);
+      // Agora buscar pedidos do usuário específico
+      console.log('🎯 Buscando pedidos específicos do usuário...');
+      
+      // Tentativa 1: Com orderBy
+      let ordersQuery;
+      let querySnapshot;
+      
+      try {
+        console.log('🔍 Tentando busca COM orderBy...');
+        ordersQuery = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+        querySnapshot = await getDocs(ordersQuery);
+        console.log(`📋 Busca COM orderBy: ${querySnapshot.size} pedidos encontrados`);
+      } catch (orderError) {
+        console.warn('⚠️ Erro com orderBy, tentando sem ordenação:', orderError);
+        // Tentativa 2: Sem orderBy (caso não tenha índice)
+        ordersQuery = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.uid)
+        );
+        querySnapshot = await getDocs(ordersQuery);
+        console.log(`📋 Busca SEM orderBy: ${querySnapshot.size} pedidos encontrados`);
+      }
+      
       const orders: Order[] = [];
 
       querySnapshot.forEach((doc) => {
+        console.log(`📦 Processando pedido ${doc.id}...`);
         const data = doc.data();
         const order: Order = {
           id: doc.id,
@@ -116,9 +156,10 @@ export const orderService = {
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
         };
         orders.push(order);
+        console.log(`✅ Pedido ${doc.id} processado:`, order);
       });
 
-      console.log(`✅ Encontrados ${orders.length} pedidos`);
+      console.log(`📊 Total de pedidos retornados: ${orders.length}`);
       return orders;
     } catch (error) {
       console.error('❌ Erro ao buscar pedidos:', error);
