@@ -1,10 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { ChefHat, Clock, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Button, Card, CardContent } from '../components';
 
 export function HomePage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  // Redirecionar para o dashboard quando o usuário estiver autenticado
+  if (isAuthenticated && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="space-y-12">
@@ -29,7 +34,7 @@ export function HomePage() {
                 </Link>
               )}
               <Link to="/dashboard">
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary-600">
+                <Button size="lg" variant="outline" className="text-black border-white hover:bg-white hover:text-primary-600">
                   Dashboard
                 </Button>
               </Link>
@@ -42,7 +47,7 @@ export function HomePage() {
                 </Button>
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary-600">
+                <Button size="lg" variant="outline" className="text-black border-white hover:bg-white hover:text-primary-600">
                   Já tenho conta
                 </Button>
               </Link>
