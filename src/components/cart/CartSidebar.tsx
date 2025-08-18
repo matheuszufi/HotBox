@@ -1,4 +1,5 @@
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts';
 import { Button } from '../ui';
 
@@ -8,6 +9,7 @@ interface CartSidebarProps {
 
 export function CartSidebar({ className = '' }: CartSidebarProps) {
   const { cart, updateQuantity, removeItem, clearCart } = useCart();
+  const navigate = useNavigate();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -36,8 +38,8 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
   };
 
   const handleFinishOrder = () => {
-    // TODO: Implement order submission
-    alert('Funcionalidade em desenvolvimento! Em breve você poderá finalizar seu pedido.');
+    if (cart.items.length === 0) return;
+    navigate('/checkout');
   };
 
   return (

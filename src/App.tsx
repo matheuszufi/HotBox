@@ -8,6 +8,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EditProfilePage } from './pages/EditProfilePage';
 import { MenuPage } from './pages/MenuPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrderSuccessPage } from './pages/OrderSuccessPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -52,6 +54,28 @@ function App() {
                   <ProtectedRoute allowedRoles={['customer']}>
                     <Layout>
                       <MenuPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/checkout" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <Layout>
+                      <CheckoutPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/order-success" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <Layout>
+                      <OrderSuccessPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
