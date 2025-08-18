@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import type { CreateOrderData, Order } from '../types';
 
@@ -101,29 +101,14 @@ export const orderService = {
       // Agora buscar pedidos do usuário específico
       console.log('🎯 Buscando pedidos específicos do usuário...');
       
-      // Tentativa 1: Com orderBy
-      let ordersQuery;
-      let querySnapshot;
-      
-      try {
-        console.log('🔍 Tentando busca COM orderBy...');
-        ordersQuery = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        querySnapshot = await getDocs(ordersQuery);
-        console.log(`📋 Busca COM orderBy: ${querySnapshot.size} pedidos encontrados`);
-      } catch (orderError) {
-        console.warn('⚠️ Erro com orderBy, tentando sem ordenação:', orderError);
-        // Tentativa 2: Sem orderBy (caso não tenha índice)
-        ordersQuery = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid)
-        );
-        querySnapshot = await getDocs(ordersQuery);
-        console.log(`📋 Busca SEM orderBy: ${querySnapshot.size} pedidos encontrados`);
-      }
+      // Vamos tentar sem orderBy primeiro para evitar problemas de índice
+      console.log('� Tentando busca SEM orderBy...');
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+      console.log(`📋 Busca SEM orderBy: ${querySnapshot.size} pedidos encontrados`);
       
       const orders: Order[] = [];
 

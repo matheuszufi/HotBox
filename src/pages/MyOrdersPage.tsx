@@ -34,10 +34,15 @@ export function MyOrdersPage() {
       try {
         setLoading(true);
         setError(null);
+        
         console.log('🔍 Buscando pedidos do usuário...');
+        console.log('👤 User ID atual:', user.uid);
+        console.log('📧 User email:', user.email);
+        console.log('👤 User completo:', user);
         
         const userOrders = await orderService.getMyOrders();
         console.log('📦 Pedidos encontrados:', userOrders);
+        console.log('📊 Quantidade de pedidos:', userOrders.length);
         
         setOrders(userOrders);
       } catch (err) {
@@ -48,7 +53,32 @@ export function MyOrdersPage() {
       }
     };
 
+    // Debug adicional para verificar Firebase
+    const debugFirebase = async () => {
+      if (!user) return;
+      
+      try {
+        console.log('🔧 Verificando Firebase...');
+        const { collection, getDocs, query, where } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+        
+        // Buscar pedidos específicos do usuário
+        console.log('👤 Buscando pedidos específicos do usuário...');
+        const userOrdersRef = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.uid)
+        );
+        const userOrdersSnapshot = await getDocs(userOrdersRef);
+        
+        console.log(`👤 Pedidos encontrados para o usuário: ${userOrdersSnapshot.size}`);
+        
+      } catch (error) {
+        console.error('❌ Erro no debug do Firebase:', error);
+      }
+    };
+
     fetchOrders();
+    debugFirebase();
   }, [user, navigate]);
 
   // Função para obter ícone do status
