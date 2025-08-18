@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus, Clock, Search } from 'lucide-react';
+import { Plus, Minus, Package, Search } from 'lucide-react';
 import { useCart } from '../contexts';
 import { Button, Card, CardContent, Input, CartSidebar } from '../components';
 import { menuCategories, getItemsByCategory } from '../data/menu';
@@ -84,11 +84,23 @@ export function MyOrdersPage() {
               return (
                 <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    {/* Image Placeholder */}
-                    <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-                      <div className="text-6xl">
-                        {menuCategories.find(cat => cat.id === item.category)?.icon || '🍽️'}
-                      </div>
+                    {/* Item Image */}
+                    <div className="h-48 overflow-hidden">
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          // Fallback para ícone se a imagem não carregar
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.className = 'h-48 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center';
+                            parent.innerHTML = `<div class="text-6xl">${menuCategories.find(cat => cat.id === item.category)?.icon || '🍽️'}</div>`;
+                          }
+                        }}
+                      />
                     </div>
                     
                     <div className="p-4">
@@ -105,8 +117,8 @@ export function MyOrdersPage() {
                       
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>{item.preparationTime}min</span>
+                          <Package className="h-4 w-4 mr-1" />
+                          <span>{item.quantity}{item.quantityType === 'g' ? 'g' : ' un'}</span>
                         </div>
                         
                         {!item.available && (

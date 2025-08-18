@@ -6,7 +6,8 @@ export interface MenuItem {
   category: string;
   image: string;
   available: boolean;
-  preparationTime: number; // em minutos
+  quantityType: 'g' | 'un'; // gramas ou unidade
+  quantity: number; // quantidade em gramas ou unidades
   ingredients?: string[];
   allergens?: string[];
 }

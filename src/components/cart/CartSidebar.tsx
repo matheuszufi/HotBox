@@ -42,7 +42,7 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
 
   return (
     <div className={`w-full lg:w-80 bg-white shadow-xl border-l border-gray-200 ${className}`}>
-      <div className="lg:sticky lg:top-0 h-auto lg:h-screen overflow-y-auto">
+      <div className="lg:sticky lg:top-0 h-auto">
         <div className="p-6">
           {/* Cart Header */}
           <div className="flex items-center justify-between mb-6">
@@ -68,21 +68,34 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
             </div>
           ) : (
             <>
-              <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
+              <div className="space-y-4 mb-6">
                 {cart.items.map(cartItem => (
-                  <div key={cartItem.menuItem.id} className="bg-gray-50 rounded-lg p-4 transition-all hover:bg-gray-100">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm flex-1 pr-2">
-                        {cartItem.menuItem.name}
-                      </h4>
-                      <button
-                        onClick={() => removeItem(cartItem.menuItem.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
-                        title="Remover item"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div 
+                    key={cartItem.menuItem.id} 
+                    className="relative rounded-lg p-4 transition-all overflow-hidden border border-primary-100 min-h-[120px]"
+                    style={{
+                      backgroundImage: `url(${cartItem.menuItem.image})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  >
+                    {/* Overlay para legibilidade */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/30 to-black/40 rounded-lg"></div>
+                    
+                    {/* Conteúdo do item */}
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-3">
+                        <h4 className="font-medium text-white text-sm flex-1 pr-2 drop-shadow-md">
+                          {cartItem.menuItem.name}
+                        </h4>
+                        <button
+                          onClick={() => removeItem(cartItem.menuItem.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0 drop-shadow-md"
+                          title="Remover item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -90,12 +103,12 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => handleQuantityChange(cartItem.menuItem.id, -1)}
-                          className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-200"
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-200 bg-white/90 backdrop-blur-sm"
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
                         
-                        <span className="font-medium text-gray-900 min-w-[2rem] text-center">
+                        <span className="font-medium text-white min-w-[2rem] text-center drop-shadow-md bg-black/30 px-2 py-1 rounded">
                           {cartItem.quantity}
                         </span>
                         
@@ -103,29 +116,30 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => handleQuantityChange(cartItem.menuItem.id, 1)}
-                          className="h-8 w-8 p-0 hover:bg-green-50 hover:border-green-200"
+                          className="h-8 w-8 p-0 hover:bg-green-50 hover:border-green-200 bg-white/90 backdrop-blur-sm"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
                       
                       <div className="text-right">
-                        <div className="font-bold text-primary-600">
+                        <div className="font-bold text-white drop-shadow-md bg-black/30 px-2 py-1 rounded">
                           {formatPrice(cartItem.menuItem.price * cartItem.quantity)}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-white/80 drop-shadow-md mt-1">
                           {formatPrice(cartItem.menuItem.price)} cada
                         </div>
                       </div>
                     </div>
                     
                     {cartItem.observations && (
-                      <div className="mt-2 p-2 bg-yellow-50 rounded border-l-4 border-yellow-200">
-                        <p className="text-xs text-gray-700">
+                      <div className="mt-3 p-2 bg-black/50 backdrop-blur-sm rounded border-l-4 border-yellow-300">
+                        <p className="text-xs text-white">
                           <strong>Observação:</strong> {cartItem.observations}
                         </p>
                       </div>
                     )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -136,10 +150,10 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <div className="flex items-center space-x-2 mb-1">
                     <CheckCircle className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Tempo estimado</span>
+                    <span className="text-sm font-medium text-blue-800">Informações do pedido</span>
                   </div>
                   <p className="text-sm text-blue-700">
-                    {Math.max(...cart.items.map(item => item.menuItem.preparationTime))} - {Math.max(...cart.items.map(item => item.menuItem.preparationTime)) + 10} minutos
+                    {cart.itemCount} {cart.itemCount === 1 ? 'item' : 'itens'} selecionados
                   </p>
                 </div>
 
