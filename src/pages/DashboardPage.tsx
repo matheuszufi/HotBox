@@ -307,7 +307,7 @@ function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
         <Link to="/admin/orders">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="pt-6">
@@ -318,6 +318,22 @@ function AdminDashboard() {
                 <div>
                   <h3 className="font-semibold text-lg">Gerenciar Pedidos</h3>
                   <p className="text-gray-600">Ver e atualizar status dos pedidos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/admin/stock">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Package className="text-blue-600" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Controle de Estoque</h3>
+                  <p className="text-gray-600">Gerenciar inventário dos itens</p>
                 </div>
               </div>
             </CardContent>

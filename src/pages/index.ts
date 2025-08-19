@@ -8,3 +8,4 @@ export { CheckoutPage } from './CheckoutPage';
 export { OrderSuccessPage } from './OrderSuccessPage';
 export { MyOrdersPage } from './MyOrdersPage';
 export { AdminOrdersPage } from './AdminOrdersPage';
+export { AdminStockPage } from './AdminStockPage';

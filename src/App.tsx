@@ -12,6 +12,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderSuccessPage } from './pages/OrderSuccessPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import { AdminOrdersPage } from './pages/AdminOrdersPage';
+import { AdminStockPage } from './pages/AdminStockPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -112,6 +113,17 @@ function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Layout>
                       <AdminOrdersPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/stock" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Layout>
+                      <AdminStockPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
