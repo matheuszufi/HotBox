@@ -2,7 +2,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ChefHat, Clock, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Button, Card, CardContent } from '../components';
-import HotBoxIcon from '../assets/images/hotbox2.png';
+import HotBoxIcon from '../assets/images/hotbox3.png';
 import HeroBackground from '../assets/images/hero.png';
 import { menuData } from '../data/menu';
 
@@ -35,7 +35,7 @@ export function HomePage() {
             <img 
               src={HotBoxIcon} 
               alt="HotBox Logo" 
-              className="h-36 w-36 mx-auto mb-4"
+              className="h-36 w-31 mx-auto mb-4 transition-transform duration-300 ease-in-out hover:scale-110 cursor-pointer"
             />
           </div>
           
