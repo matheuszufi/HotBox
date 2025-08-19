@@ -8,7 +8,8 @@ import {
   MapPin, 
   ArrowLeft,
   Loader2,
-  Users
+  Users,
+  ChevronDown
 } from 'lucide-react';
 import { Button, Card, CardContent } from '../components/ui';
 import { useAuth } from '../contexts';
@@ -450,7 +451,7 @@ export function AdminOrdersPage() {
                             <button
                               onClick={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
                               disabled={updatingStatus === order.id}
-                              className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(order.status)}`}
+                              className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity flex items-center space-x-1 ${getStatusColor(order.status)}`}
                             >
                               {updatingStatus === order.id ? (
                                 <div className="flex items-center space-x-1">
@@ -458,7 +459,12 @@ export function AdminOrdersPage() {
                                   <span>Atualizando...</span>
                                 </div>
                               ) : (
-                                getStatusText(order.status)
+                                <>
+                                  <span>{getStatusText(order.status)}</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${
+                                    selectedOrder === order.id ? 'rotate-180' : ''
+                                  }`} />
+                                </>
                               )}
                             </button>
                             
