@@ -11,6 +11,7 @@ import { MenuPage } from './pages/MenuPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderSuccessPage } from './pages/OrderSuccessPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
+import { AdminOrdersPage } from './pages/AdminOrdersPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -110,10 +111,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Layout>
-                      <div className="text-center py-20">
-                        <h1 className="text-2xl font-bold">Página em Desenvolvimento</h1>
-                        <p className="text-gray-600 mt-2">A página de administração será implementada em breve.</p>
-                      </div>
+                      <AdminOrdersPage />
                     </Layout>
                   </ProtectedRoute>
                 } 

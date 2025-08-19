@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import type { CreateOrderData, Order } from '../types';
 
@@ -168,6 +168,86 @@ export const orderService = {
     } catch (error) {
       console.error('❌ Erro ao deletar pedido:', error);
       throw new Error('Erro ao deletar pedido. Tente novamente.');
+    }
+  },
+
+  async getAllOrders(): Promise<Order[]> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('❌ Usuário não autenticado para buscar todos os pedidos');
+        return [];
+      }
+
+      console.log('🔍 Buscando todos os pedidos (admin)...');
+
+      // Buscar todos os pedidos
+      const allOrdersSnapshot = await getDocs(collection(db, 'orders'));
+      console.log(`📊 Total de pedidos encontrados: ${allOrdersSnapshot.size}`);
+      
+      const orders: Order[] = [];
+
+      allOrdersSnapshot.forEach((doc) => {
+        console.log(`📦 Processando pedido ${doc.id}...`);
+        const data = doc.data();
+        const order: Order = {
+          id: doc.id,
+          userId: data.userId,
+          userName: data.userName || 'Usuário',
+          userEmail: data.userEmail || '',
+          items: data.items.map((item: any) => ({
+            menuItem: {
+              id: item.menuItemId,
+              name: item.menuItemName,
+              price: item.menuItemPrice,
+              description: '',
+              category: '',
+              image: '',
+              available: true
+            },
+            quantity: item.quantity
+          })),
+          total: data.total,
+          status: data.status,
+          deliveryAddress: data.deliveryAddress,
+          paymentMethod: data.paymentMethod,
+          notes: data.notes,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        };
+        orders.push(order);
+      });
+
+      // Ordenar por data de criação (mais recentes primeiro)
+      orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      console.log(`📊 Total de pedidos retornados: ${orders.length}`);
+      return orders;
+    } catch (error) {
+      console.error('❌ Erro ao buscar todos os pedidos:', error);
+      return [];
+    }
+  },
+
+  async updateOrderStatus(orderId: string, newStatus: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log(`🔄 Atualizando status do pedido ${orderId} para ${newStatus}...`);
+      
+      // Atualizar o documento no Firestore
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('✅ Status do pedido atualizado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao atualizar status do pedido:', error);
+      throw new Error('Erro ao atualizar status do pedido. Tente novamente.');
     }
   }
 };

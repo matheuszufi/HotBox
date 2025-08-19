@@ -6,3 +6,5 @@ export { EditProfilePage } from './EditProfilePage';
 export { MenuPage } from './MenuPage';
 export { CheckoutPage } from './CheckoutPage';
 export { OrderSuccessPage } from './OrderSuccessPage';
+export { MyOrdersPage } from './MyOrdersPage';
+export { AdminOrdersPage } from './AdminOrdersPage';
