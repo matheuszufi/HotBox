@@ -9,7 +9,8 @@ import {
   Calendar,
   ShoppingBag,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { Button, Card, CardContent } from '../components/ui';
 import { useAuth } from '../contexts';
@@ -22,6 +23,7 @@ export function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingOrder, setDeletingOrder] = useState<string | null>(null);
 
   // Buscar orders quando a página carregar
   useEffect(() => {
@@ -80,6 +82,28 @@ export function MyOrdersPage() {
     fetchOrders();
     debugFirebase();
   }, [user, navigate]);
+
+  // Função para deletar pedido
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este pedido?')) {
+      return;
+    }
+
+    try {
+      setDeletingOrder(orderId);
+      await orderService.deleteOrder(orderId);
+      
+      // Remover o pedido da lista local
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      
+      console.log('✅ Pedido excluído com sucesso!');
+    } catch (err) {
+      console.error('❌ Erro ao excluir pedido:', err);
+      setError('Erro ao excluir pedido. Tente novamente.');
+    } finally {
+      setDeletingOrder(null);
+    }
+  };
 
   // Função para obter ícone do status
   const getStatusIcon = (status: string) => {
@@ -286,7 +310,7 @@ export function MyOrdersPage() {
                       )}
                     </div>
 
-                    {/* Total */}
+                    {/* Total e ações */}
                     <div className="lg:ml-6 lg:text-right">
                       <div className="bg-primary-50 rounded-lg p-4">
                         <p className="text-sm text-gray-600 mb-1">Total do pedido</p>
@@ -298,6 +322,31 @@ export function MyOrdersPage() {
                           {order.paymentMethod === 'pix' && 'PIX'}
                           {order.paymentMethod === 'cash' && 'Dinheiro'}
                         </p>
+                        
+                        {/* Botão de excluir para pedidos pendentes */}
+                        {order.status === 'pending' && (
+                          <div className="mt-3">
+                            <Button
+                              onClick={() => handleDeleteOrder(order.id)}
+                              disabled={deletingOrder === order.id}
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                            >
+                              {deletingOrder === order.id ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Excluindo...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir Pedido
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

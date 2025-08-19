@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import type { CreateOrderData, Order } from '../types';
 
@@ -149,6 +149,25 @@ export const orderService = {
     } catch (error) {
       console.error('❌ Erro ao buscar pedidos:', error);
       return [];
+    }
+  },
+
+  async deleteOrder(orderId: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('🗑️ Deletando pedido:', orderId);
+      
+      // Deletar o documento do Firestore
+      await deleteDoc(doc(db, 'orders', orderId));
+      
+      console.log('✅ Pedido deletado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao deletar pedido:', error);
+      throw new Error('Erro ao deletar pedido. Tente novamente.');
     }
   }
 };
