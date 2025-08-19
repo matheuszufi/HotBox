@@ -10,7 +10,8 @@ import {
   ShoppingBag,
   ArrowLeft,
   Loader2,
-  Trash2
+  Trash2,
+  Truck
 } from 'lucide-react';
 import { Button, Card, CardContent } from '../components/ui';
 import { useAuth } from '../contexts';
@@ -116,6 +117,8 @@ export function MyOrdersPage() {
         return <Package className="h-5 w-5 text-orange-500" />;
       case 'ready':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'out-for-delivery':
+        return <Truck className="h-5 w-5 text-purple-500" />;
       case 'delivered':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'cancelled':
@@ -136,6 +139,8 @@ export function MyOrdersPage() {
         return 'Preparando';
       case 'ready':
         return 'Pronto';
+      case 'out-for-delivery':
+        return 'Saiu para Entrega';
       case 'delivered':
         return 'Entregue';
       case 'cancelled':
@@ -156,6 +161,8 @@ export function MyOrdersPage() {
         return 'bg-orange-100 text-orange-800';
       case 'ready':
         return 'bg-green-100 text-green-800';
+      case 'out-for-delivery':
+        return 'bg-purple-100 text-purple-800';
       case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
@@ -260,6 +267,14 @@ export function MyOrdersPage() {
                         </span>
                       </div>
 
+                      {/* Nome do usuário */}
+                      <div className="mb-4">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <span>👤</span>
+                          <span>{order.userName || order.userEmail}</span>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         {/* Data */}
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -283,6 +298,16 @@ export function MyOrdersPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Telefone do usuário */}
+                      {order.userPhone && (
+                        <div className="mb-4">
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <span>📞</span>
+                            <span>{order.userPhone}</span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Itens do pedido */}
                       <div className="mb-4">

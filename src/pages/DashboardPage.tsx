@@ -21,7 +21,8 @@ function CustomerDashboard() {
     totalOrders: 0,
     totalSpent: 0,
     lastMonthSpent: 0,
-    averageOrder: 0
+    averageOrder: 0,
+    totalSaved: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +35,14 @@ function CustomerDashboard() {
         // Calcular estatísticas
         const totalOrders = orders.length;
         const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+        
+        // Calcular valor economizado com pedidos agendados (desconto de 2%)
+        const scheduledOrders = orders.filter(order => order.deliveryType === 'scheduled');
+        const totalSaved = scheduledOrders.reduce((sum, order) => {
+          // Usar o campo discountAmount salvo no banco de dados
+          const savedAmount = order.discountAmount || 0;
+          return sum + savedAmount;
+        }, 0);
         
         // Calcular valor gasto no último mês
         const oneMonthAgo = new Date();
@@ -51,7 +60,8 @@ function CustomerDashboard() {
           totalOrders,
           totalSpent,
           lastMonthSpent,
-          averageOrder
+          averageOrder,
+          totalSaved
         });
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
@@ -173,6 +183,25 @@ function CustomerDashboard() {
               </div>
               <div className="p-3 bg-orange-100 rounded-full">
                 <TrendingUp className="text-orange-600" size={20} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Economizado</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {loading ? '...' : formatPrice(stats.totalSaved)}
+                </p>
+                <p className="text-xs text-gray-500">com pedidos agendados</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-full">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
               </div>
             </div>
           </CardContent>

@@ -1,6 +1,6 @@
 import type { CartItem } from './menu';
 
-export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered' | 'cancelled';
 
 export interface Order {
   id: string;
@@ -10,6 +10,8 @@ export interface Order {
   userPhone?: string;
   items: CartItem[];
   total: number;
+  originalTotal?: number; // Valor original antes do desconto
+  discountAmount?: number; // Valor do desconto aplicado
   status: OrderStatus;
   deliveryAddress?: string;
   paymentMethod: 'cash' | 'card' | 'pix';
@@ -35,4 +37,6 @@ export interface CreateOrderData {
   scheduledDate?: string;
   scheduledTime?: string;
   userPhone?: string; // Telefone do usuário
+  originalTotal?: number; // Valor original antes do desconto
+  discountAmount?: number; // Valor do desconto aplicado
 }

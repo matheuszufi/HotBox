@@ -190,7 +190,9 @@ export function CheckoutPage() {
           }
         })(),
         scheduledDate: formData.deliveryType === 'scheduled' ? formData.deliveryDate : undefined,
-        scheduledTime: formData.deliveryTime || undefined
+        scheduledTime: formData.deliveryTime || undefined,
+        originalTotal: cart.total, // Valor original antes do desconto
+        discountAmount: calculateDiscount() // Valor do desconto aplicado
       };
 
       // Adicionar informações de agendamento nas observações se for entrega agendada

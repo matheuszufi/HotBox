@@ -16,7 +16,9 @@ export const orderService = {
       console.log('📞 Telefone do usuário no orderData:', orderData.userPhone);
 
       // Calcular total do pedido
-      const total = orderData.items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+      const subtotal = orderData.items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+      const discountAmount = orderData.discountAmount || 0;
+      const total = subtotal - discountAmount;
 
       // Criar objeto do pedido para Firestore
       const orderForFirestore = {
@@ -32,6 +34,8 @@ export const orderService = {
           subtotal: item.menuItem.price * item.quantity
         })),
         total,
+        originalTotal: orderData.originalTotal || subtotal,
+        discountAmount: discountAmount,
         status: 'pending' as const,
         deliveryAddress: orderData.deliveryAddress,
         paymentMethod: orderData.paymentMethod,
@@ -61,8 +65,11 @@ export const orderService = {
         userId: user.uid,
         userName: user.displayName || 'Usuário',
         userEmail: user.email || '',
+        userPhone: orderData.userPhone,
         items: orderData.items,
         total,
+        originalTotal: orderData.originalTotal || subtotal,
+        discountAmount: discountAmount,
         status: 'pending',
         deliveryAddress: orderData.deliveryAddress,
         paymentMethod: orderData.paymentMethod,
@@ -149,6 +156,8 @@ export const orderService = {
             quantity: item.quantity
           })),
           total: data.total,
+          originalTotal: data.originalTotal || data.total, // Fallback para pedidos antigos
+          discountAmount: data.discountAmount || 0, // Fallback para pedidos antigos
           status: data.status,
           deliveryAddress: data.deliveryAddress,
           paymentMethod: data.paymentMethod,
@@ -240,6 +249,8 @@ export const orderService = {
             quantity: item.quantity
           })),
           total: data.total,
+          originalTotal: data.originalTotal || data.total, // Fallback para pedidos antigos
+          discountAmount: data.discountAmount || 0, // Fallback para pedidos antigos
           status: data.status,
           deliveryAddress: data.deliveryAddress,
           paymentMethod: data.paymentMethod,

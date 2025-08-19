@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Loader2,
   Users,
+  Truck,
   ChevronDown
 } from 'lucide-react';
 import { Button, Card, CardContent } from '../components/ui';
@@ -153,6 +154,7 @@ export function AdminOrdersPage() {
     { value: 'confirmed', label: 'Confirmado', color: 'bg-blue-100 text-blue-800' },
     { value: 'preparing', label: 'Preparando', color: 'bg-orange-100 text-orange-800' },
     { value: 'ready', label: 'Pronto', color: 'bg-green-100 text-green-800' },
+    { value: 'out-for-delivery', label: 'Saiu para Entrega', color: 'bg-purple-100 text-purple-800' },
     { value: 'delivered', label: 'Entregue', color: 'bg-green-100 text-green-800' },
     { value: 'cancelled', label: 'Cancelado', color: 'bg-red-100 text-red-800' }
   ];
@@ -193,6 +195,8 @@ export function AdminOrdersPage() {
         return <Package className="h-5 w-5 text-orange-500" />;
       case 'ready':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'out-for-delivery':
+        return <Truck className="h-5 w-5 text-purple-500" />;
       case 'delivered':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'cancelled':
@@ -213,6 +217,8 @@ export function AdminOrdersPage() {
         return 'Preparando';
       case 'ready':
         return 'Pronto';
+      case 'out-for-delivery':
+        return 'Saiu para Entrega';
       case 'delivered':
         return 'Entregue';
       case 'cancelled':
@@ -233,6 +239,8 @@ export function AdminOrdersPage() {
         return 'bg-orange-100 text-orange-800';
       case 'ready':
         return 'bg-green-100 text-green-800';
+      case 'out-for-delivery':
+        return 'bg-purple-100 text-purple-800';
       case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
@@ -320,6 +328,7 @@ export function AdminOrdersPage() {
                     <option value="confirmed">Confirmado</option>
                     <option value="preparing">Preparando</option>
                     <option value="ready">Pronto</option>
+                    <option value="out-for-delivery">Saiu para Entrega</option>
                     <option value="delivered">Entregue</option>
                     <option value="cancelled">Cancelado</option>
                   </select>

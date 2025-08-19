@@ -74,7 +74,7 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                 {cart.items.map(cartItem => (
                   <div 
                     key={cartItem.menuItem.id} 
-                    className="relative rounded-lg p-4 transition-all overflow-hidden border border-primary-100 min-h-[120px]"
+                    className="relative p-4 transition-all overflow-hidden border border-primary-100 min-h-[120px]"
                     style={{
                       backgroundImage: `url(${cartItem.menuItem.image})`,
                       backgroundSize: 'cover',
