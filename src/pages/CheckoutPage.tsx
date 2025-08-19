@@ -147,7 +147,10 @@ export function CheckoutPage() {
         items: cart.items,
         deliveryAddress: formData.deliveryAddress,
         paymentMethod: formData.paymentMethod,
-        notes: formData.notes || undefined
+        notes: formData.notes || undefined,
+        deliveryType: formData.deliveryType,
+        scheduledDate: formData.deliveryType === 'scheduled' ? formData.deliveryDate : undefined,
+        scheduledTime: formData.deliveryTime || undefined
       };
 
       // Adicionar informações de agendamento nas observações se for entrega agendada

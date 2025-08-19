@@ -9,8 +9,7 @@ import {
   Calendar,
   ArrowLeft,
   Loader2,
-  Users,
-  Filter
+  Users
 } from 'lucide-react';
 import { Button, Card, CardContent } from '../components/ui';
 import { useAuth } from '../contexts';
@@ -25,6 +24,13 @@ export function AdminOrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    paymentMethod: 'all',
+    dateRange: 'all',
+    deliveryType: 'all'
+  });
 
   // Buscar orders quando a página carregar
   useEffect(() => {
@@ -40,11 +46,12 @@ export function AdminOrdersPage() {
         
         console.log('🔍 Buscando todos os pedidos...');
         
-        const allOrders = await orderService.getAllOrders();
+        const fetchedOrders = await orderService.getAllOrders();
         
-        console.log('📦 Pedidos encontrados:', allOrders.length);
+        console.log('📦 Pedidos encontrados:', fetchedOrders.length);
         
-        setOrders(allOrders);
+        setAllOrders(fetchedOrders);
+        setOrders(fetchedOrders);
       } catch (err) {
         console.error('❌ Erro ao buscar pedidos:', err);
         setError('Erro ao carregar pedidos. Tente novamente.');
@@ -70,6 +77,91 @@ export function AdminOrdersPage() {
     };
   }, [selectedOrder]);
 
+  // Função para filtrar pedidos
+  const applyFilters = () => {
+    let filtered = [...allOrders];
+
+    // Filtro por status
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(order => order.status === filters.status);
+    }
+
+    // Filtro por método de pagamento
+    if (filters.paymentMethod !== 'all') {
+      filtered = filtered.filter(order => order.paymentMethod === filters.paymentMethod);
+    }
+
+    // Filtro por data
+    if (filters.dateRange !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      switch (filters.dateRange) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          filtered = filtered.filter(order => {
+            // Para pedidos agendados, verificar se é para hoje
+            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
+              const scheduledDate = new Date(order.scheduledDate);
+              scheduledDate.setHours(0, 0, 0, 0);
+              return scheduledDate.getTime() === filterDate.getTime();
+            }
+            // Para pedidos normais, verificar data de criação
+            return new Date(order.createdAt) >= filterDate;
+          });
+          break;
+        case 'upcoming':
+          // Mostrar apenas pedidos agendados para os próximos 7 dias
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const nextWeek = new Date(today);
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          
+          filtered = filtered.filter(order => {
+            // Apenas pedidos agendados nos próximos dias
+            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
+              const scheduledDate = new Date(order.scheduledDate);
+              scheduledDate.setHours(0, 0, 0, 0);
+              return scheduledDate.getTime() > today.getTime() && scheduledDate.getTime() <= nextWeek.getTime();
+            }
+            return false; // Não mostrar pedidos não agendados neste filtro
+          });
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          filtered = filtered.filter(order => {
+            // Para pedidos agendados, verificar se é para esta semana
+            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
+              const scheduledDate = new Date(order.scheduledDate);
+              return scheduledDate >= filterDate && scheduledDate <= now;
+            }
+            // Para pedidos normais, verificar data de criação
+            return new Date(order.createdAt) >= filterDate;
+          });
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          filtered = filtered.filter(order => {
+            // Para pedidos agendados, verificar se é para este mês
+            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
+              const scheduledDate = new Date(order.scheduledDate);
+              return scheduledDate >= filterDate && scheduledDate <= now;
+            }
+            // Para pedidos normais, verificar data de criação
+            return new Date(order.createdAt) >= filterDate;
+          });
+          break;
+      }
+    }
+
+    setOrders(filtered);
+  };
+
+  // Aplicar filtros quando mudar
+  useEffect(() => {
+    applyFilters();
+  }, [filters, allOrders]);
+
   // Opções de status disponíveis
   const statusOptions = [
     { value: 'pending', label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
@@ -86,8 +178,8 @@ export function AdminOrdersPage() {
       setUpdatingStatus(orderId);
       await orderService.updateOrderStatus(orderId, newStatus);
       
-      // Atualizar o pedido na lista local
-      setOrders(prevOrders => 
+      // Atualizar o pedido na lista de todos os pedidos
+      setAllOrders(prevOrders => 
         prevOrders.map(order => 
           order.id === orderId 
             ? { ...order, status: newStatus as any, updatedAt: new Date().toISOString() }
@@ -211,10 +303,6 @@ export function AdminOrdersPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Filter className="h-4 w-4" />
-                <span>Todos os status</span>
-              </div>
               <Button
                 onClick={() => navigate('/dashboard')}
                 variant="outline"
@@ -225,6 +313,84 @@ export function AdminOrdersPage() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Filtro por Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({...filters, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">Todos os status</option>
+                    <option value="pending">Pendente</option>
+                    <option value="confirmed">Confirmado</option>
+                    <option value="preparing">Preparando</option>
+                    <option value="ready">Pronto</option>
+                    <option value="delivered">Entregue</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
+                </div>
+
+                {/* Filtro por Método de Pagamento */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Método de Pagamento
+                  </label>
+                  <select
+                    value={filters.paymentMethod}
+                    onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">Todos os métodos</option>
+                    <option value="card">Cartão de Crédito</option>
+                    <option value="pix">PIX</option>
+                    <option value="cash">Dinheiro</option>
+                  </select>
+                </div>
+
+                {/* Filtro por Data */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Período
+                  </label>
+                  <select
+                    value={filters.dateRange}
+                    onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">Todos os períodos</option>
+                    <option value="today">Hoje</option>
+                    <option value="upcoming">Próximos Dias</option>
+                    <option value="week">Última semana</option>
+                    <option value="month">Último mês</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Botão para limpar filtros */}
+              <div className="mt-4 flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  Mostrando {orders.length} de {allOrders.length} pedidos
+                </div>
+                <Button
+                  onClick={() => setFilters({ status: 'all', paymentMethod: 'all', dateRange: 'all', deliveryType: 'all' })}
+                  variant="outline"
+                  size="sm"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Estatísticas */}

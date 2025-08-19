@@ -34,6 +34,9 @@ export const orderService = {
         deliveryAddress: orderData.deliveryAddress,
         paymentMethod: orderData.paymentMethod,
         notes: orderData.notes || null,
+        deliveryType: orderData.deliveryType || 'today',
+        scheduledDate: orderData.scheduledDate || null,
+        scheduledTime: orderData.scheduledTime || null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
@@ -57,6 +60,9 @@ export const orderService = {
         deliveryAddress: orderData.deliveryAddress,
         paymentMethod: orderData.paymentMethod,
         notes: orderData.notes,
+        deliveryType: orderData.deliveryType || 'today',
+        scheduledDate: orderData.scheduledDate,
+        scheduledTime: orderData.scheduledTime,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -137,6 +143,9 @@ export const orderService = {
           deliveryAddress: data.deliveryAddress,
           paymentMethod: data.paymentMethod,
           notes: data.notes,
+          deliveryType: data.deliveryType || 'today',
+          scheduledDate: data.scheduledDate,
+          scheduledTime: data.scheduledTime,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
         };
@@ -212,6 +221,9 @@ export const orderService = {
           deliveryAddress: data.deliveryAddress,
           paymentMethod: data.paymentMethod,
           notes: data.notes,
+          deliveryType: data.deliveryType || 'today',
+          scheduledDate: data.scheduledDate,
+          scheduledTime: data.scheduledTime,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
         };

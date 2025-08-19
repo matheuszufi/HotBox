@@ -15,6 +15,9 @@ export interface Order {
   paymentMethod: 'cash' | 'card' | 'pix';
   notes?: string;
   estimatedDeliveryTime?: string;
+  deliveryType?: 'today' | 'scheduled';
+  scheduledDate?: string;
+  scheduledTime?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,4 +27,7 @@ export interface CreateOrderData {
   deliveryAddress?: string;
   paymentMethod: 'cash' | 'card' | 'pix';
   notes?: string;
+  deliveryType?: 'today' | 'scheduled';
+  scheduledDate?: string;
+  scheduledTime?: string;
 }
