@@ -357,15 +357,26 @@ function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Estatísticas - Top 5 Itens Mais Pedidos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Itens Mais Pedidos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TopItemsStats />
-        </CardContent>
-      </Card>
+      {/* Estatísticas - Top 5 Itens e Top 5 Clientes */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Top 5 Itens Mais Pedidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TopItemsStats />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Top 5 Clientes que Mais Compraram</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TopCustomersStats />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -552,6 +563,232 @@ function TopItemsStats() {
                 <div 
                   className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500"
                   style={{ width: `${item.percentage}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TopCustomersStats() {
+  const [topCustomers, setTopCustomers] = useState<Array<{
+    name: string;
+    email: string;
+    totalSpent: number;
+    orderCount: number;
+    percentage: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('all');
+
+  const getDateFilter = (period: typeof selectedPeriod) => {
+    const now = new Date();
+    
+    switch (period) {
+      case 'today':
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return (date: Date) => date >= today;
+      
+      case 'week':
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return (date: Date) => date >= weekAgo;
+      
+      case 'month':
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(now.getMonth() - 1);
+        return (date: Date) => date >= monthAgo;
+      
+      case 'year':
+        const yearAgo = new Date(now);
+        yearAgo.setFullYear(now.getFullYear() - 1);
+        return (date: Date) => date >= yearAgo;
+      
+      case 'all':
+      default:
+        return () => true;
+    }
+  };
+
+  const getPeriodLabel = (period: typeof selectedPeriod) => {
+    switch (period) {
+      case 'today': return 'Hoje';
+      case 'week': return 'Esta Semana';
+      case 'month': return 'Este Mês';
+      case 'year': return 'Este Ano';
+      case 'all': return 'Todos os Tempos';
+      default: return 'Todos os Tempos';
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
+  };
+
+  useEffect(() => {
+    const loadTopCustomers = async () => {
+      try {
+        setLoading(true);
+        const allOrders = await orderService.getAllOrders();
+        
+        // Filtrar pedidos pelo período selecionado
+        const dateFilter = getDateFilter(selectedPeriod);
+        const filteredOrders = allOrders.filter(order => 
+          dateFilter(new Date(order.createdAt))
+        );
+        
+        // Agrupar por cliente e calcular totais
+        const customerStats: Record<string, {
+          name: string;
+          email: string;
+          totalSpent: number;
+          orderCount: number;
+        }> = {};
+        
+        filteredOrders.forEach(order => {
+          const customerId = order.userId;
+          const customerName = order.userName || 'Cliente Anônimo';
+          const customerEmail = order.userEmail || '';
+          
+          if (customerStats[customerId]) {
+            customerStats[customerId].totalSpent += order.total;
+            customerStats[customerId].orderCount += 1;
+          } else {
+            customerStats[customerId] = {
+              name: customerName,
+              email: customerEmail,
+              totalSpent: order.total,
+              orderCount: 1
+            };
+          }
+        });
+
+        // Converter para array e ordenar por valor total gasto
+        const sortedCustomers = Object.values(customerStats)
+          .sort((a, b) => b.totalSpent - a.totalSpent)
+          .slice(0, 5);
+
+        // Calcular percentuais baseado no total gasto
+        const totalSpent = sortedCustomers.reduce((sum, customer) => sum + customer.totalSpent, 0);
+        
+        const topCustomersWithPercentage = sortedCustomers.map(customer => ({
+          name: customer.name,
+          email: customer.email,
+          totalSpent: customer.totalSpent,
+          orderCount: customer.orderCount,
+          percentage: totalSpent > 0 ? (customer.totalSpent / totalSpent) * 100 : 0
+        }));
+
+        setTopCustomers(topCustomersWithPercentage);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas de clientes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTopCustomers();
+  }, [selectedPeriod]);
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros de Período */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <span className="text-sm font-medium text-gray-700 mr-2 flex items-center">
+          Período:
+        </span>
+        {[
+          { value: 'today', label: 'Hoje' },
+          { value: 'week', label: 'Semana' },
+          { value: 'month', label: 'Mês' },
+          { value: 'year', label: 'Ano' },
+          { value: 'all', label: 'Todos' }
+        ].map((period) => (
+          <button
+            key={period.value}
+            onClick={() => setSelectedPeriod(period.value as typeof selectedPeriod)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+              selectedPeriod === period.value
+                ? 'bg-primary-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {period.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Título do período selecionado */}
+      <div className="text-center mb-4">
+        <h4 className="text-lg font-semibold text-gray-800">
+          Top 5 Clientes - {getPeriodLabel(selectedPeriod)}
+        </h4>
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="flex justify-between items-center mb-2">
+                <div className="space-y-1">
+                  <div className="h-4 bg-gray-300 rounded w-32"></div>
+                  <div className="h-3 bg-gray-300 rounded w-24"></div>
+                </div>
+                <div className="text-right space-y-1">
+                  <div className="h-4 bg-gray-300 rounded w-20"></div>
+                  <div className="h-3 bg-gray-300 rounded w-16"></div>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 bg-gray-300 rounded-full" style={{ width: '60%' }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : topCustomers.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <Users size={48} className="mx-auto mb-4 text-gray-300" />
+          <p>Nenhum cliente encontrado para {getPeriodLabel(selectedPeriod).toLowerCase()}.</p>
+          <p className="text-sm">Tente selecionar um período diferente.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {topCustomers.map((customer, index) => (
+            <div key={customer.email || customer.name} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 text-sm font-bold">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{customer.name}</div>
+                    {customer.email && (
+                      <div className="text-xs text-gray-500">{customer.email}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-gray-900">
+                    {formatPrice(customer.totalSpent)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {customer.orderCount} {customer.orderCount === 1 ? 'pedido' : 'pedidos'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {customer.percentage.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="h-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
+                  style={{ width: `${customer.percentage}%` }}
                 ></div>
               </div>
             </div>

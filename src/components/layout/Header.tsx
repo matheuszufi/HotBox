@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Home, Package } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Home, Package, Boxes } from 'lucide-react';
 import { useAuth, useCart } from '../../contexts';
 import { Button } from '../ui';
 import HotBoxIcon from '../../assets/images/hotbox2.png';
@@ -64,13 +64,22 @@ export function Header() {
               )}
               
               {user?.role === 'admin' && (
-                <Link 
-                  to="/admin/orders" 
-                  className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors"
-                >
-                  <Package size={18} />
-                  <span>Pedidos</span>
-                </Link>
+                <>
+                  <Link 
+                    to="/admin/orders" 
+                    className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors"
+                  >
+                    <Package size={18} />
+                    <span>Pedidos</span>
+                  </Link>
+                  <Link 
+                    to="/admin/stock" 
+                    className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors"
+                  >
+                    <Boxes size={18} />
+                    <span>Estoque</span>
+                  </Link>
+                </>
               )}
             </>
           )}

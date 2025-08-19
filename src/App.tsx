@@ -2,17 +2,19 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, CartProvider } from './contexts';
 import { Layout, ProtectedRoute } from './components';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { EditProfilePage } from './pages/EditProfilePage';
-import { MenuPage } from './pages/MenuPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { OrderSuccessPage } from './pages/OrderSuccessPage';
-import { MyOrdersPage } from './pages/MyOrdersPage';
-import { AdminOrdersPage } from './pages/AdminOrdersPage';
-import { AdminStockPage } from './pages/AdminStockPage';
+import { 
+  HomePage,
+  LoginPage,
+  RegisterPage,
+  DashboardPage,
+  EditProfilePage,
+  MenuPage,
+  CheckoutPage,
+  OrderSuccessPage,
+  MyOrdersPage,
+  AdminOrdersPage,
+  AdminStockPage
+} from './pages';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
