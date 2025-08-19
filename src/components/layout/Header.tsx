@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Home, Package, Boxes } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Home, Package, Boxes, DollarSign } from 'lucide-react';
 import { useAuth, useCart } from '../../contexts';
 import { Button } from '../ui';
 import HotBoxIcon from '../../assets/images/hotbox2.png';
@@ -78,6 +78,13 @@ export function Header() {
                   >
                     <Boxes size={18} />
                     <span>Estoque</span>
+                  </Link>
+                  <Link 
+                    to="/admin/finance" 
+                    className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors"
+                  >
+                    <DollarSign size={18} />
+                    <span>Finanças</span>
                   </Link>
                 </>
               )}

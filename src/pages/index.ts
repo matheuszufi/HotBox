@@ -9,3 +9,4 @@ export { OrderSuccessPage } from './OrderSuccessPage';
 export { MyOrdersPage } from './MyOrdersPage';
 export { AdminOrdersPage } from './AdminOrdersPage';
 export { default as AdminStockPage } from './AdminStockPage';
+export { default as AdminFinancePage } from './AdminFinancePage';
