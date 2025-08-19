@@ -10,3 +10,5 @@ export { MyOrdersPage } from './MyOrdersPage';
 export { AdminOrdersPage } from './AdminOrdersPage';
 export { default as AdminStockPage } from './AdminStockPage';
 export { default as AdminFinancePage } from './AdminFinancePage';
+export { default as AdminDREPage } from './AdminDREPage';
+export { default as AdminFluxoCaixaPage } from './AdminFluxoCaixaPage';

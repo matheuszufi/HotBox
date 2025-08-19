@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -11,7 +12,9 @@ import {
   Filter,
   Receipt,
   Target,
-  Percent
+  Percent,
+  FileText,
+  ArrowUpDown
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { orderService } from '../services/orderService';
@@ -36,6 +39,7 @@ interface FinancialStats {
 }
 
 export default function AdminFinancePage() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<FinancialStats>({
     totalRevenue: 0,
     totalOrders: 0,
@@ -417,6 +421,24 @@ export default function AdminFinancePage() {
         >
           <Download size={20} />
           Exportar CSV
+        </button>
+      </div>
+
+      {/* Botões de Navegação Financeira */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <button
+          onClick={() => navigate('/admin/dre')}
+          className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
+        >
+          <FileText size={20} />
+          DRE - Demonstração do Resultado
+        </button>
+        <button
+          onClick={() => navigate('/admin/fluxo-caixa')}
+          className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
+        >
+          <ArrowUpDown size={20} />
+          Fluxo de Caixa
         </button>
       </div>
 
