@@ -312,20 +312,207 @@ function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Recent Orders */}
+      {/* Estatísticas - Top 5 Itens Mais Pedidos */}
       <Card>
         <CardHeader>
-          <CardTitle>Pedidos Recentes</CardTitle>
+          <CardTitle>Top 5 Itens Mais Pedidos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="text-center py-8 text-gray-500">
-              <Package size={48} className="mx-auto mb-4 text-gray-300" />
-              <p>Nenhum pedido recente encontrado.</p>
-            </div>
-          </div>
+          <TopItemsStats />
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function TopItemsStats() {
+  const [topItems, setTopItems] = useState<Array<{
+    name: string;
+    quantity: number;
+    percentage: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('all');
+
+  const getDateFilter = (period: typeof selectedPeriod) => {
+    const now = new Date();
+    
+    switch (period) {
+      case 'today':
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return (date: Date) => date >= today;
+      
+      case 'week':
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return (date: Date) => date >= weekAgo;
+      
+      case 'month':
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(now.getMonth() - 1);
+        return (date: Date) => date >= monthAgo;
+      
+      case 'year':
+        const yearAgo = new Date(now);
+        yearAgo.setFullYear(now.getFullYear() - 1);
+        return (date: Date) => date >= yearAgo;
+      
+      case 'all':
+      default:
+        return () => true;
+    }
+  };
+
+  const getPeriodLabel = (period: typeof selectedPeriod) => {
+    switch (period) {
+      case 'today': return 'Hoje';
+      case 'week': return 'Esta Semana';
+      case 'month': return 'Este Mês';
+      case 'year': return 'Este Ano';
+      case 'all': return 'Todos os Tempos';
+      default: return 'Todos os Tempos';
+    }
+  };
+
+  useEffect(() => {
+    const loadTopItems = async () => {
+      try {
+        setLoading(true);
+        const allOrders = await orderService.getAllOrders();
+        
+        // Filtrar pedidos pelo período selecionado
+        const dateFilter = getDateFilter(selectedPeriod);
+        const filteredOrders = allOrders.filter(order => 
+          dateFilter(new Date(order.createdAt))
+        );
+        
+        // Contar quantidade de cada item
+        const itemCounts: Record<string, { name: string; count: number }> = {};
+        
+        filteredOrders.forEach(order => {
+          order.items.forEach(item => {
+            const itemName = item.menuItem.name;
+            if (itemCounts[itemName]) {
+              itemCounts[itemName].count += item.quantity;
+            } else {
+              itemCounts[itemName] = {
+                name: itemName,
+                count: item.quantity
+              };
+            }
+          });
+        });
+
+        // Converter para array e ordenar
+        const sortedItems = Object.values(itemCounts)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        // Calcular percentuais
+        const totalItems = sortedItems.reduce((sum, item) => sum + item.count, 0);
+        
+        const topItemsWithPercentage = sortedItems.map(item => ({
+          name: item.name,
+          quantity: item.count,
+          percentage: totalItems > 0 ? (item.count / totalItems) * 100 : 0
+        }));
+
+        setTopItems(topItemsWithPercentage);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas de itens:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTopItems();
+  }, [selectedPeriod]);
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros de Período */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <span className="text-sm font-medium text-gray-700 mr-2 flex items-center">
+          Período:
+        </span>
+        {[
+          { value: 'today', label: 'Hoje' },
+          { value: 'week', label: 'Semana' },
+          { value: 'month', label: 'Mês' },
+          { value: 'year', label: 'Ano' },
+          { value: 'all', label: 'Todos' }
+        ].map((period) => (
+          <button
+            key={period.value}
+            onClick={() => setSelectedPeriod(period.value as typeof selectedPeriod)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+              selectedPeriod === period.value
+                ? 'bg-primary-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {period.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Título do período selecionado */}
+      <div className="text-center mb-4">
+        <h4 className="text-lg font-semibold text-gray-800">
+          Top 5 Itens - {getPeriodLabel(selectedPeriod)}
+        </h4>
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="flex justify-between items-center mb-2">
+                <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-300 rounded w-16"></div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 bg-gray-300 rounded-full" style={{ width: '60%' }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : topItems.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <TrendingUp size={48} className="mx-auto mb-4 text-gray-300" />
+          <p>Nenhum item encontrado para {getPeriodLabel(selectedPeriod).toLowerCase()}.</p>
+          <p className="text-sm">Tente selecionar um período diferente.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {topItems.map((item, index) => (
+            <div key={item.name} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-600 text-sm font-bold">
+                    {index + 1}
+                  </div>
+                  <span className="font-medium text-gray-900">{item.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-gray-900">
+                    {item.quantity} {item.quantity === 1 ? 'pedido' : 'pedidos'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {item.percentage.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500"
+                  style={{ width: `${item.percentage}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

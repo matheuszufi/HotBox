@@ -78,11 +78,11 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                     style={{
                       backgroundImage: `url(${cartItem.menuItem.image})`,
                       backgroundSize: 'cover',
-                      backgroundPosition: 'center',
+                      backgroundPosition: 'center'
                     }}
                   >
                     {/* Overlay para legibilidade */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/30 to-black/40 rounded-lg"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg"></div>
                     
                     {/* Conteúdo do item */}
                     <div className="relative z-10">
@@ -125,7 +125,7 @@ export function CartSidebar({ className = '' }: CartSidebarProps) {
                       </div>
                       
                       <div className="text-right">
-                        <div className="font-bold text-white drop-shadow-md bg-black/30 px-2 py-1 rounded">
+                        <div className="font-bold text-white drop-shadow-md bg-black/50 px-2 py-1">
                           {formatPrice(cartItem.menuItem.price * cartItem.quantity)}
                         </div>
                         <div className="text-xs text-white/80 drop-shadow-md mt-1">
