@@ -162,9 +162,11 @@ export function CheckoutPage() {
     
     try {
       console.log('⏳ Criando dados do pedido...');
+      console.log('👤 Dados do usuário:', { name: user?.name, phone: user?.phone, email: user?.email });
       
       const orderData: CreateOrderData = {
         items: cart.items,
+        userPhone: user?.phone || undefined,
         deliveryAddress: formData.deliveryAddress,
         paymentMethod: formData.paymentMethod,
         notes: formData.notes || undefined,
@@ -205,6 +207,7 @@ export function CheckoutPage() {
       }
 
       console.log('📦 OrderData criado:', orderData);
+      console.log('📞 Telefone do usuário no pedido:', orderData.userPhone);
       
       console.log('🔄 Chamando orderService.createOrder...');
       const createdOrder = await orderService.createOrder(orderData);

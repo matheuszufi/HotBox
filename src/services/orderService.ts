@@ -13,6 +13,7 @@ export const orderService = {
 
       console.log('🔄 Criando pedido no Firestore...');
       console.log('📦 OrderData:', orderData);
+      console.log('📞 Telefone do usuário no orderData:', orderData.userPhone);
 
       // Calcular total do pedido
       const total = orderData.items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
@@ -22,6 +23,7 @@ export const orderService = {
         userId: user.uid,
         userName: user.displayName || 'Usuário',
         userEmail: user.email,
+        userPhone: orderData.userPhone || null,
         items: orderData.items.map(item => ({
           menuItemId: item.menuItem.id,
           menuItemName: item.menuItem.name,
@@ -43,7 +45,10 @@ export const orderService = {
         updatedAt: serverTimestamp()
       };
 
-      console.log('💾 Salvando no Firestore:', orderForFirestore);
+      console.log('💾 Objeto que será salvo no Firestore:');
+      console.log('📞 userPhone:', orderForFirestore.userPhone);
+      console.log('👤 userEmail:', orderForFirestore.userEmail);
+      console.log('📦 Objeto completo:', orderForFirestore);
 
       // Adicionar ao Firestore
       const docRef = await addDoc(collection(db, 'orders'), orderForFirestore);
@@ -130,6 +135,7 @@ export const orderService = {
           userId: data.userId,
           userName: data.userName || 'Usuário',
           userEmail: data.userEmail || '',
+          userPhone: data.userPhone || null,
           items: data.items.map((item: any) => ({
             menuItem: {
               id: item.menuItemId,
@@ -214,11 +220,13 @@ export const orderService = {
       allOrdersSnapshot.forEach((doc) => {
         console.log(`📦 Processando pedido ${doc.id}...`);
         const data = doc.data();
+        console.log(`📞 Telefone encontrado no Firestore para pedido ${doc.id}:`, data.userPhone);
         const order: Order = {
           id: doc.id,
           userId: data.userId,
           userName: data.userName || 'Usuário',
           userEmail: data.userEmail || '',
+          userPhone: data.userPhone || null,
           items: data.items.map((item: any) => ({
             menuItem: {
               id: item.menuItemId,

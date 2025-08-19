@@ -34,4 +34,5 @@ export interface CreateOrderData {
   deliveryDateTime?: string; // Data e hora combinadas para ordenação
   scheduledDate?: string;
   scheduledTime?: string;
+  userPhone?: string; // Telefone do usuário
 }

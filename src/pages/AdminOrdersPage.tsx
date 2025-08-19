@@ -499,6 +499,11 @@ export function AdminOrdersPage() {
                       <div className="mb-3">
                         <p className="font-medium text-gray-900">{order.userName}</p>
                         <p className="text-sm text-gray-600">{order.userEmail}</p>
+                        {order.userPhone ? (
+                          <p className="text-sm text-gray-600">📞 {order.userPhone}</p>
+                        ) : (
+                          <p className="text-sm text-gray-400">📞 Telefone não informado</p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
