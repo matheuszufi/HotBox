@@ -407,7 +407,10 @@ export function AdminOrdersPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Valor Total</p>
                   <p className="text-2xl font-bold text-green-600">
-                    R$ {orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
+                    R$ {orders
+                      .filter(order => order.status !== 'cancelled' && order.status !== 'pending')
+                      .reduce((sum, order) => sum + order.total, 0)
+                      .toFixed(2)}
                   </p>
                 </div>
                 <Package className="h-8 w-8 text-green-600" />

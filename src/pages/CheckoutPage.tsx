@@ -60,6 +60,16 @@ export function CheckoutPage() {
 
   // Função para obter a data de hoje em Brasília (usada como mínimo para agendamento)
   const getTodayBrazil = () => {
+    const now = getBrazilianDateTime();
+    const currentHour = now.getHours();
+    
+    // Se já passou das 14h, não permitir agendamento para hoje
+    if (currentHour >= 14) {
+      const tomorrow = getBrazilianDate(1);
+      console.log('🕐 Já passou das 14h, data mínima para agendamento:', tomorrow);
+      return tomorrow;
+    }
+    
     const today = getBrazilianDate(0);
     console.log('🇧🇷 Data de hoje no Brasil:', today);
     return today;
@@ -71,18 +81,26 @@ export function CheckoutPage() {
     const currentHour = now.getHours();
     const currentMinutes = now.getMinutes();
     
+    // Para entrega hoje, verificar se ainda é possível entregar
+    const isToday = formData.deliveryType === 'today' || 
+      (formData.deliveryType === 'scheduled' && formData.deliveryDate === getTodayBrazil());
+    
     for (let hour = 10; hour <= 14; hour++) {
-      // Para horários de hoje, só mostrar horários futuros
-      if (formData.deliveryType === 'today') {
+      // Para horários de hoje, só mostrar horários futuros e com tempo hábil
+      if (isToday) {
         if (hour < currentHour || (hour === currentHour && currentMinutes >= 30)) {
           continue; // Pular horários passados
+        }
+        // Se for muito tarde (depois das 14h), não mostrar mais horários
+        if (currentHour >= 14) {
+          break;
         }
       }
       
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
       if (hour < 14) {
         // Para hoje, verificar se o horário :30 ainda é válido
-        if (formData.deliveryType === 'today' && hour === currentHour && currentMinutes >= 0) {
+        if (isToday && hour === currentHour && currentMinutes >= 0) {
           // Se já passou dos 30 min da hora atual, não incluir
         } else {
           slots.push(`${hour.toString().padStart(2, '0')}:30`);
@@ -128,6 +146,37 @@ export function CheckoutPage() {
     if (formData.deliveryType === 'scheduled') {
       if (!formData.deliveryDate) {
         newErrors.deliveryDate = 'Data de entrega é obrigatória';
+      } else {
+        // Verificar se não está tentando agendar para hoje após 14h
+        const now = getBrazilianDateTime();
+        const selectedDate = new Date(formData.deliveryDate);
+        const today = new Date(getBrazilianDate(0));
+        
+        if (selectedDate.toDateString() === today.toDateString() && now.getHours() >= 14) {
+          newErrors.deliveryDate = 'Agendamento para hoje não disponível após 14h';
+        }
+        
+        // Verificar se o horário selecionado é válido para o dia escolhido
+        if (formData.deliveryTime && selectedDate.toDateString() === today.toDateString()) {
+          const [selectedHour] = formData.deliveryTime.split(':').map(Number);
+          if (selectedHour <= now.getHours()) {
+            newErrors.deliveryTime = 'Horário deve ser no futuro';
+          }
+        }
+      }
+    } else if (formData.deliveryType === 'today') {
+      // Verificar se ainda é possível entregar hoje
+      const now = getBrazilianDateTime();
+      if (now.getHours() >= 14) {
+        newErrors.deliveryTime = 'Entrega para hoje não disponível após 14h';
+      } else if (formData.deliveryTime) {
+        const [selectedHour, selectedMinute] = formData.deliveryTime.split(':').map(Number);
+        const selectedTime = selectedHour * 60 + selectedMinute;
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        
+        if (selectedTime <= currentTime) {
+          newErrors.deliveryTime = 'Horário deve ser no futuro';
+        }
       }
     }
 

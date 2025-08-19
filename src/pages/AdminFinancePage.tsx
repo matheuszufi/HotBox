@@ -66,22 +66,30 @@ export default function AdminFinancePage() {
     switch (period) {
       case 'today':
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        return (date: Date) => date >= today;
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return (date: Date) => {
+          const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          return dateOnly.getTime() >= today.getTime() && dateOnly.getTime() < tomorrow.getTime();
+        };
       
       case 'week':
         const weekAgo = new Date(now);
         weekAgo.setDate(now.getDate() - 7);
-        return (date: Date) => date >= weekAgo;
+        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        return (date: Date) => date >= weekAgo && date < todayEnd;
       
       case 'month':
         const monthAgo = new Date(now);
         monthAgo.setMonth(now.getMonth() - 1);
-        return (date: Date) => date >= monthAgo;
+        const todayEnd2 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        return (date: Date) => date >= monthAgo && date < todayEnd2;
       
       case 'year':
         const yearAgo = new Date(now);
         yearAgo.setFullYear(now.getFullYear() - 1);
-        return (date: Date) => date >= yearAgo;
+        const todayEnd3 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        return (date: Date) => date >= yearAgo && date < todayEnd3;
       
       case 'all':
       default:
@@ -104,26 +112,57 @@ export default function AdminFinancePage() {
     const loadFinancialData = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Carregando dados financeiros...');
         const allOrders = await orderService.getAllOrders();
+        console.log('📦 Total de pedidos carregados:', allOrders.length);
+        console.log('📋 Pedidos:', allOrders);
         
-        // Filtrar apenas pedidos confirmados, entregues ou em processamento
+        // Filtrar pedidos cancelados e pendentes (aceitar apenas processados/confirmados/entregues)
         const validOrders = allOrders.filter(order => 
           order.status !== 'cancelled' && order.status !== 'pending'
         );
+        console.log('✅ Pedidos válidos (não cancelados/pendentes):', validOrders.length);
+        console.log('📊 Status dos pedidos:', allOrders.map(o => ({ id: o.id, status: o.status, total: o.total })));
         
         // Aplicar filtro de período
         const dateFilter = getDateFilter(selectedPeriod);
-        const filteredOrders = validOrders.filter(order => 
-          dateFilter(new Date(order.createdAt))
-        );
+        const filteredOrders = validOrders.filter(order => {
+          // Usar data de entrega agendada para filtro de período também
+          let relevantDate: Date;
+          
+          if (order.deliveryDateTime) {
+            relevantDate = new Date(order.deliveryDateTime);
+          } else if (order.deliveryDate) {
+            relevantDate = new Date(order.deliveryDate + 'T12:00:00');
+          } else {
+            relevantDate = new Date(order.createdAt);
+          }
+          
+          const matchesFilter = dateFilter(relevantDate);
+          
+          console.log(`🔍 Pedido ${order.id.slice(-8)}:`);
+          console.log(`  📅 Data criação: ${new Date(order.createdAt).toISOString().split('T')[0]}`);
+          console.log(`  🚚 Data entrega: ${order.deliveryDate || 'hoje'}`);
+          console.log(`  📊 Data usada no filtro: ${relevantDate.toISOString().split('T')[0]}`);
+          console.log(`  ✅ Incluído no período '${selectedPeriod}': ${matchesFilter}`);
+          console.log(`  💰 Valor: R$ ${order.total}`);
+          
+          return matchesFilter;
+        });
+        console.log('📅 Pedidos filtrados por período:', filteredOrders.length);
 
         setOrders(filteredOrders);
 
-        // Calcular estatísticas
+        // Calcular estatísticas (baseadas na data de entrega - APENAS HISTÓRICO)
+        console.log('💰 Calculando estatísticas baseadas na data de entrega (HISTÓRICO)...');
         const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
         const totalOrders = filteredOrders.length;
         const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
         const totalDiscounts = filteredOrders.reduce((sum, order) => sum + (order.discountAmount || 0), 0);
+        
+        console.log(`💵 Receita total (HISTÓRICO por data de entrega): ${totalRevenue.toFixed(2)}`);
+        console.log(`📦 Total de pedidos: ${totalOrders}`);
+        console.log(`📊 Ticket médio: ${averageOrderValue.toFixed(2)}`);
 
         // Receita por método de pagamento
         const revenueByPaymentMethod: Record<string, number> = {};
@@ -132,46 +171,158 @@ export default function AdminFinancePage() {
           revenueByPaymentMethod[method] = (revenueByPaymentMethod[method] || 0) + order.total;
         });
 
-        // Receita por período (últimos 7 dias)
+        // Receita por período (dinâmico baseado no filtro selecionado)
         const revenueByPeriod: Array<{ date: string; revenue: number; orders: number }> = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split('T')[0];
-          
-          const dayOrders = filteredOrders.filter(order => {
-            const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
-            return orderDate === dateStr;
-          });
-          
-          revenueByPeriod.push({
-            date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-            revenue: dayOrders.reduce((sum, order) => sum + order.total, 0),
-            orders: dayOrders.length
-          });
+        
+        console.log('📈 Calculando receita por período...');
+        console.log('🔢 Pedidos filtrados para período:', filteredOrders.length);
+        
+        // Determinar número de períodos e formato baseado no filtro
+        let periodsCount = 7;
+        let dateFormat: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit' };
+        let groupBy = 'day';
+        
+        switch (selectedPeriod) {
+          case 'today':
+          case 'week':
+            periodsCount = 7;
+            dateFormat = { day: '2-digit', month: '2-digit' };
+            groupBy = 'day';
+            break;
+          case 'month':
+            periodsCount = 30;
+            dateFormat = { day: '2-digit', month: '2-digit' };
+            groupBy = 'day';
+            break;
+          case 'year':
+          case 'all':
+            periodsCount = 12;
+            dateFormat = { month: 'short' };
+            groupBy = 'month';
+            break;
+        }
+        
+        console.log(`📊 Configuração: período=${selectedPeriod}, groupBy=${groupBy}, periodsCount=${periodsCount}`);
+        
+        if (groupBy === 'day') {
+          // Agrupar por dias
+          for (let i = periodsCount - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.getFullYear() + '-' + 
+              String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+              String(date.getDate()).padStart(2, '0');
+            
+            console.log(`📅 Verificando dia: ${dateStr} (histórico/passado)`);
+            
+            const dayOrders = filteredOrders.filter(order => {
+              // Usar data de entrega agendada, não data de criação
+              let relevantDate: Date;
+              
+              if (order.deliveryDateTime) {
+                relevantDate = new Date(order.deliveryDateTime);
+              } else if (order.deliveryDate) {
+                relevantDate = new Date(order.deliveryDate + 'T12:00:00');
+              } else {
+                relevantDate = new Date(order.createdAt);
+              }
+              
+              const orderDateStr = relevantDate.getFullYear() + '-' + 
+                String(relevantDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(relevantDate.getDate()).padStart(2, '0');
+              
+              const matches = orderDateStr === dateStr;
+              if (matches) {
+                console.log(`  ✅ Pedido ${order.id.slice(-8)} corresponde: entrega=${orderDateStr}, valor=${order.total}`);
+              }
+              return matches;
+            });
+            
+            const dayRevenue = dayOrders.reduce((sum, order) => sum + order.total, 0);
+            console.log(`💰 Dia ${dateStr}: ${dayOrders.length} pedidos, receita=${dayRevenue}`);
+            
+            revenueByPeriod.push({
+              date: date.toLocaleDateString('pt-BR', dateFormat),
+              revenue: dayRevenue,
+              orders: dayOrders.length
+            });
+          }
+        } else {
+          // Agrupar por meses
+          for (let i = periodsCount - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            const monthOrders = filteredOrders.filter(order => {
+              // Usar data de entrega agendada, não data de criação
+              let relevantDate: Date;
+              
+              if (order.deliveryDateTime) {
+                relevantDate = new Date(order.deliveryDateTime);
+              } else if (order.deliveryDate) {
+                relevantDate = new Date(order.deliveryDate + 'T12:00:00');
+              } else {
+                relevantDate = new Date(order.createdAt);
+              }
+              
+              return relevantDate.getFullYear() === year && relevantDate.getMonth() === month;
+            });
+            
+            revenueByPeriod.push({
+              date: date.toLocaleDateString('pt-BR', dateFormat),
+              revenue: monthOrders.reduce((sum, order) => sum + order.total, 0),
+              orders: monthOrders.length
+            });
+          }
         }
 
         // Top 5 dias com mais vendas
         const dailyRevenue: Record<string, { revenue: number; orders: number }> = {};
+        console.log('📊 Calculando top dias de vendas...');
         filteredOrders.forEach(order => {
-          const date = new Date(order.createdAt).toISOString().split('T')[0];
-          if (!dailyRevenue[date]) {
-            dailyRevenue[date] = { revenue: 0, orders: 0 };
+          // Usar data de entrega agendada, não data de criação
+          let relevantDate: Date;
+          
+          if (order.deliveryDateTime) {
+            // Se tem deliveryDateTime, usar essa data
+            relevantDate = new Date(order.deliveryDateTime);
+          } else if (order.deliveryDate) {
+            // Se tem deliveryDate, usar essa data
+            relevantDate = new Date(order.deliveryDate + 'T12:00:00');
+          } else {
+            // Fallback para data de criação
+            relevantDate = new Date(order.createdAt);
           }
-          dailyRevenue[date].revenue += order.total;
-          dailyRevenue[date].orders += 1;
+          
+          const localDateStr = relevantDate.getFullYear() + '-' + 
+            String(relevantDate.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(relevantDate.getDate()).padStart(2, '0');
+          
+          console.log(`📅 Pedido ${order.id.slice(-8)}: entrega=${order.deliveryDate || 'hoje'}, data contabilizada=${localDateStr}, total=${order.total}`);
+          
+          if (!dailyRevenue[localDateStr]) {
+            dailyRevenue[localDateStr] = { revenue: 0, orders: 0 };
+          }
+          dailyRevenue[localDateStr].revenue += order.total;
+          dailyRevenue[localDateStr].orders += 1;
         });
+
+        console.log('💰 Receita por dia de entrega:', dailyRevenue);
 
         const topSellingDays = Object.entries(dailyRevenue)
           .map(([date, data]) => ({
-            date: new Date(date).toLocaleDateString('pt-BR'),
+            date: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR'),
             revenue: data.revenue,
             orders: data.orders
           }))
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 5);
 
-        setStats({
+        console.log('🏆 Top 5 dias por entrega:', topSellingDays);
+
+        const finalStats = {
           totalRevenue,
           totalOrders,
           averageOrderValue,
@@ -179,7 +330,17 @@ export default function AdminFinancePage() {
           revenueByPaymentMethod,
           revenueByPeriod,
           topSellingDays
+        };
+
+        console.log('📊 Estatísticas finais:', {
+          totalRevenue,
+          totalOrders,
+          revenueByPeriodLength: revenueByPeriod.length,
+          topSellingDaysLength: topSellingDays.length
         });
+        console.log('📈 Receita por período final:', revenueByPeriod);
+
+        setStats(finalStats);
       } catch (error) {
         console.error('Erro ao carregar dados financeiros:', error);
       } finally {
@@ -439,41 +600,41 @@ export default function AdminFinancePage() {
         </Card>
       </div>
 
-      {/* Receita dos Últimos 7 Dias */}
+      {/* Receita por Período */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp size={20} />
-            Receita dos Últimos 7 Dias
+            Receita por Período - {getPeriodLabel(selectedPeriod)}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-7 gap-2">
-              {stats.revenueByPeriod.map((day, index) => {
+            <div className={`grid gap-2 ${stats.revenueByPeriod.length <= 7 ? 'grid-cols-7' : stats.revenueByPeriod.length <= 12 ? 'grid-cols-6' : 'grid-cols-4'}`}>
+              {stats.revenueByPeriod.map((period, index) => {
                 const maxRevenue = Math.max(...stats.revenueByPeriod.map(d => d.revenue));
-                const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                const height = maxRevenue > 0 ? (period.revenue / maxRevenue) * 100 : 0;
                 
                 return (
                   <div key={index} className="text-center">
                     <div className="mb-2 flex items-end justify-center" style={{ height: '120px' }}>
                       <div 
                         className="bg-gradient-to-t from-orange-500 to-orange-300 rounded-t-md w-8 transition-all duration-500"
-                        style={{ height: `${height}%`, minHeight: day.revenue > 0 ? '8px' : '0px' }}
-                        title={`${formatPrice(day.revenue)} - ${day.orders} pedidos`}
+                        style={{ height: `${height}%`, minHeight: period.revenue > 0 ? '8px' : '0px' }}
+                        title={`${formatPrice(period.revenue)} - ${period.orders} pedidos`}
                       ></div>
                     </div>
-                    <div className="text-xs font-medium">{day.date}</div>
-                    <div className="text-xs text-gray-500">{formatPrice(day.revenue)}</div>
-                    <div className="text-xs text-gray-400">{day.orders} pedidos</div>
+                    <div className="text-xs font-medium">{period.date}</div>
+                    <div className="text-xs text-gray-500">{formatPrice(period.revenue)}</div>
+                    <div className="text-xs text-gray-400">{period.orders} pedidos</div>
                   </div>
                 );
               })}
             </div>
-            {stats.revenueByPeriod.every(day => day.revenue === 0) && (
+            {stats.revenueByPeriod.every(period => period.revenue === 0) && (
               <div className="text-center py-8 text-gray-500">
                 <TrendingDown size={48} className="mx-auto mb-4 text-gray-300" />
-                <p>Nenhuma venda registrada nos últimos 7 dias</p>
+                <p>Nenhuma venda registrada no período selecionado</p>
               </div>
             )}
           </div>
