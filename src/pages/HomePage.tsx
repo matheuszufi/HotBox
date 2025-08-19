@@ -18,7 +18,7 @@ export function HomePage() {
     <div className="space-y-12">
       {/* Hero Section */}
       <section 
-        className="text-center py-16 text-white rounded-2xl relative overflow-hidden"
+        className="text-center py-16 text-white relative overflow-hidden"
         style={{
           backgroundImage: `url(${HeroBackground})`,
           backgroundSize: 'cover',
@@ -70,11 +70,11 @@ export function HomePage() {
                   Começar Agora <ArrowRight className="ml-2" size={20} />
                 </Button> */}
               </Link>
-              <Link to="/login">
+              {/* <Link to="/login">
                 <Button size="lg" variant="outline" className="text-red-500 border-white hover:bg-white hover:text-primary-600">
                   Entrar
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           )}
         </div>
