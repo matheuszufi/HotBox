@@ -3,6 +3,8 @@ import { ChefHat, Clock, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Button, Card, CardContent } from '../components';
 import HotBoxIcon from '../assets/images/hotbox2.png';
+import HeroBackground from '../assets/images/hero.png';
+import { menuData } from '../data/menu';
 
 export function HomePage() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -15,20 +17,31 @@ export function HomePage() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <section className="text-center py-16 bg-gradient-to-r from-primary-600/80 to-primary-700/80 text-white rounded-2xl backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4">
+      <section 
+        className="text-center py-16 text-white rounded-2xl relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${HeroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Overlay para garantir legibilidade do texto */}
+        <div className="absolute inset-0 bg-black/50"></div>
+        
+        <div className="max-w-4xl mx-auto px-4 relative z-10">
           {/* Logo */}
           <div className="mb-8">
             <img 
               src={HotBoxIcon} 
               alt="HotBox Logo" 
-              className="h-32 w-32 mx-auto mb-4"
+              className="h-36 w-36 mx-auto mb-4"
             />
           </div>
           
           <h1 className="text-5xl font-bold mb-6">
-            <span className="text-red-200">Hot</span>
-            <span className="text-orange-200">Box</span>
+            <span className="text-red-500">Hot</span>
+            <span className="text-orange-500">Box</span>
           </h1>
           <p className="text-xl mb-8 text-primary-100">
             Sabores autênticos entregues direto na sua mesa. 
@@ -113,37 +126,24 @@ export function HomePage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            {
-              name: 'Hambúrguer Artesanal',
-              description: 'Carne 100% bovina, queijo especial e molho da casa',
-              price: 'R$ 28,90',
-              image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop'
-            },
-            {
-              name: 'Pizza Margherita',
-              description: 'Molho de tomate, mussarela e manjericão fresco',
-              price: 'R$ 35,90',
-              image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop'
-            },
-            {
-              name: 'Pasta Carbonara',
-              description: 'Macarrão ao molho cremoso com bacon e parmesão',
-              price: 'R$ 32,90',
-              image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop'
-            }
-          ].map((item, index) => (
+            menuData.find(item => item.id === 'arroz'),
+            menuData.find(item => item.id === 'costela-boi'),
+            menuData.find(item => item.id === 'macarrao-bolonhesa')
+          ].filter(Boolean).map((item, index) => (
             <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-video">
                 <img 
-                  src={item.image} 
-                  alt={item.name}
+                  src={item!.image} 
+                  alt={item!.name}
                   className="w-full h-full object-cover"
                 />
               </div>
               <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
-                <p className="text-gray-600 text-sm mb-3">{item.description}</p>
-                <p className="text-primary-600 font-bold text-lg">{item.price}</p>
+                <h3 className="font-semibold text-lg mb-2">{item!.name}</h3>
+                <p className="text-gray-600 text-sm mb-3">{item!.description}</p>
+                <p className="text-primary-600 font-bold text-lg">
+                  R$ {item!.price.toFixed(2).replace('.', ',')}
+                </p>
               </CardContent>
             </Card>
           ))}
