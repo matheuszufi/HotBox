@@ -39,9 +39,35 @@ export function CheckoutPage() {
     }).format(price);
   };
 
+  // Função para obter data no fuso horário de Brasília
+  const getBrazilianDate = (offset = 0) => {
+    const now = new Date();
+    // Ajustar para o fuso horário de Brasília (UTC-3)
+    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    brazilTime.setDate(brazilTime.getDate() + offset);
+    
+    const year = brazilTime.getFullYear();
+    const month = (brazilTime.getMonth() + 1).toString().padStart(2, '0');
+    const day = brazilTime.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
+
+  const getBrazilianDateTime = () => {
+    const now = new Date();
+    return new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+  };
+
+  // Função para obter a data de hoje em Brasília (usada como mínimo para agendamento)
+  const getTodayBrazil = () => {
+    const today = getBrazilianDate(0);
+    console.log('🇧🇷 Data de hoje no Brasil:', today);
+    return today;
+  };
+
   const generateTimeSlots = () => {
     const slots = [];
-    const now = new Date();
+    const now = getBrazilianDateTime(); // Usar horário de Brasília
     const currentHour = now.getHours();
     const currentMinutes = now.getMinutes();
     
@@ -66,16 +92,10 @@ export function CheckoutPage() {
     return slots;
   };
 
-  const getTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  };
-
   const getMaxDate = () => {
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 7); // Até 7 dias no futuro
-    return maxDate.toISOString().split('T')[0];
+    const maxDate = getBrazilianDate(7); // Até 7 dias no futuro no fuso horário de Brasília
+    console.log('🗓️ Data máxima para agendamento:', maxDate);
+    return maxDate;
   };
 
   const calculateDiscount = () => {
@@ -151,18 +171,18 @@ export function CheckoutPage() {
         deliveryType: formData.deliveryType,
         deliveryDate: formData.deliveryType === 'scheduled' 
           ? formData.deliveryDate 
-          : new Date().toISOString().split('T')[0], // Hoje no formato YYYY-MM-DD
+          : getBrazilianDate(0), // Hoje no fuso horário de Brasília
         deliveryDateTime: (() => {
           if (formData.deliveryType === 'scheduled' && formData.deliveryDate && formData.deliveryTime) {
             // Para pedidos agendados: combinar data e hora
             return `${formData.deliveryDate}T${formData.deliveryTime}:00`;
           } else if (formData.deliveryTime) {
             // Para pedidos de hoje com horário específico
-            const today = new Date().toISOString().split('T')[0];
+            const today = getBrazilianDate(0);
             return `${today}T${formData.deliveryTime}:00`;
           } else {
             // Para pedidos sem horário específico, usar horário atual + 30 min
-            const now = new Date();
+            const now = getBrazilianDateTime();
             now.setMinutes(now.getMinutes() + 30);
             return now.toISOString();
           }
@@ -388,7 +408,7 @@ export function CheckoutPage() {
                         </label>
                         <input
                           type="date"
-                          min={getTomorrowDate()}
+                          min={getTodayBrazil()}
                           max={getMaxDate()}
                           value={formData.deliveryDate}
                           onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
