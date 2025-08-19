@@ -35,6 +35,8 @@ export const orderService = {
         paymentMethod: orderData.paymentMethod,
         notes: orderData.notes || null,
         deliveryType: orderData.deliveryType || 'today',
+        deliveryDate: orderData.deliveryDate, // Data de entrega sempre preenchida
+        deliveryDateTime: orderData.deliveryDateTime, // Data e hora combinadas para ordenação
         scheduledDate: orderData.scheduledDate || null,
         scheduledTime: orderData.scheduledTime || null,
         createdAt: serverTimestamp(),
@@ -61,6 +63,8 @@ export const orderService = {
         paymentMethod: orderData.paymentMethod,
         notes: orderData.notes,
         deliveryType: orderData.deliveryType || 'today',
+        deliveryDate: orderData.deliveryDate,
+        deliveryDateTime: orderData.deliveryDateTime,
         scheduledDate: orderData.scheduledDate,
         scheduledTime: orderData.scheduledTime,
         createdAt: new Date().toISOString(),
@@ -144,6 +148,17 @@ export const orderService = {
           paymentMethod: data.paymentMethod,
           notes: data.notes,
           deliveryType: data.deliveryType || 'today',
+          deliveryDate: data.deliveryDate || new Date().toISOString().split('T')[0], // Fallback para pedidos antigos
+          deliveryDateTime: data.deliveryDateTime || (() => {
+            // Fallback para pedidos antigos sem deliveryDateTime
+            if (data.scheduledDate && data.scheduledTime) {
+              return `${data.scheduledDate}T${data.scheduledTime}:00`;
+            } else {
+              const createdAt = data.createdAt?.toDate?.() || new Date();
+              createdAt.setMinutes(createdAt.getMinutes() + 30);
+              return createdAt.toISOString();
+            }
+          })(),
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -222,6 +237,17 @@ export const orderService = {
           paymentMethod: data.paymentMethod,
           notes: data.notes,
           deliveryType: data.deliveryType || 'today',
+          deliveryDate: data.deliveryDate || new Date().toISOString().split('T')[0], // Fallback para pedidos antigos
+          deliveryDateTime: data.deliveryDateTime || (() => {
+            // Fallback para pedidos antigos sem deliveryDateTime
+            if (data.scheduledDate && data.scheduledTime) {
+              return `${data.scheduledDate}T${data.scheduledTime}:00`;
+            } else {
+              const createdAt = data.createdAt?.toDate?.() || new Date();
+              createdAt.setMinutes(createdAt.getMinutes() + 30);
+              return createdAt.toISOString();
+            }
+          })(),
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -230,8 +256,12 @@ export const orderService = {
         orders.push(order);
       });
 
-      // Ordenar por data de criação (mais recentes primeiro)
-      orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      // Ordenar por data/hora de entrega (mais próximos primeiro)
+      orders.sort((a, b) => {
+        const dateA = new Date(a.deliveryDateTime || a.createdAt);
+        const dateB = new Date(b.deliveryDateTime || b.createdAt);
+        return dateA.getTime() - dateB.getTime();
+      });
 
       console.log(`📊 Total de pedidos retornados: ${orders.length}`);
       return orders;

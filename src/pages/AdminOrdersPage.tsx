@@ -6,7 +6,6 @@ import {
   CheckCircle, 
   XCircle, 
   MapPin, 
-  Calendar,
   ArrowLeft,
   Loader2,
   Users
@@ -100,14 +99,9 @@ export function AdminOrdersPage() {
         case 'today':
           filterDate.setHours(0, 0, 0, 0);
           filtered = filtered.filter(order => {
-            // Para pedidos agendados, verificar se é para hoje
-            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
-              const scheduledDate = new Date(order.scheduledDate);
-              scheduledDate.setHours(0, 0, 0, 0);
-              return scheduledDate.getTime() === filterDate.getTime();
-            }
-            // Para pedidos normais, verificar data de criação
-            return new Date(order.createdAt) >= filterDate;
+            const deliveryDate = new Date(order.deliveryDate);
+            deliveryDate.setHours(0, 0, 0, 0);
+            return deliveryDate.getTime() === filterDate.getTime();
           });
           break;
         case 'upcoming':
@@ -119,10 +113,10 @@ export function AdminOrdersPage() {
           
           filtered = filtered.filter(order => {
             // Apenas pedidos agendados nos próximos dias
-            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
-              const scheduledDate = new Date(order.scheduledDate);
-              scheduledDate.setHours(0, 0, 0, 0);
-              return scheduledDate.getTime() > today.getTime() && scheduledDate.getTime() <= nextWeek.getTime();
+            if (order.deliveryType === 'scheduled') {
+              const deliveryDate = new Date(order.deliveryDate);
+              deliveryDate.setHours(0, 0, 0, 0);
+              return deliveryDate.getTime() > today.getTime() && deliveryDate.getTime() <= nextWeek.getTime();
             }
             return false; // Não mostrar pedidos não agendados neste filtro
           });
@@ -130,25 +124,15 @@ export function AdminOrdersPage() {
         case 'week':
           filterDate.setDate(now.getDate() - 7);
           filtered = filtered.filter(order => {
-            // Para pedidos agendados, verificar se é para esta semana
-            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
-              const scheduledDate = new Date(order.scheduledDate);
-              return scheduledDate >= filterDate && scheduledDate <= now;
-            }
-            // Para pedidos normais, verificar data de criação
-            return new Date(order.createdAt) >= filterDate;
+            const deliveryDate = new Date(order.deliveryDate);
+            return deliveryDate >= filterDate && deliveryDate <= now;
           });
           break;
         case 'month':
           filterDate.setMonth(now.getMonth() - 1);
           filtered = filtered.filter(order => {
-            // Para pedidos agendados, verificar se é para este mês
-            if (order.deliveryType === 'scheduled' && order.scheduledDate) {
-              const scheduledDate = new Date(order.scheduledDate);
-              return scheduledDate >= filterDate && scheduledDate <= now;
-            }
-            // Para pedidos normais, verificar data de criação
-            return new Date(order.createdAt) >= filterDate;
+            const deliveryDate = new Date(order.deliveryDate);
+            return deliveryDate >= filterDate && deliveryDate <= now;
           });
           break;
       }
@@ -512,18 +496,29 @@ export function AdminOrdersPage() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {/* Data */}
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {new Date(order.createdAt).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
+                        {/* Data/Hora de Entrega */}
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Clock className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              Entrega: {new Date(order.deliveryDateTime || order.createdAt).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            <div className="text-gray-600">
+                              às {new Date(order.deliveryDateTime || order.createdAt).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                              {order.deliveryType === 'scheduled' && (
+                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                  Agendado
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
                         {/* Endereço */}

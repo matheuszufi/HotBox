@@ -149,6 +149,24 @@ export function CheckoutPage() {
         paymentMethod: formData.paymentMethod,
         notes: formData.notes || undefined,
         deliveryType: formData.deliveryType,
+        deliveryDate: formData.deliveryType === 'scheduled' 
+          ? formData.deliveryDate 
+          : new Date().toISOString().split('T')[0], // Hoje no formato YYYY-MM-DD
+        deliveryDateTime: (() => {
+          if (formData.deliveryType === 'scheduled' && formData.deliveryDate && formData.deliveryTime) {
+            // Para pedidos agendados: combinar data e hora
+            return `${formData.deliveryDate}T${formData.deliveryTime}:00`;
+          } else if (formData.deliveryTime) {
+            // Para pedidos de hoje com horário específico
+            const today = new Date().toISOString().split('T')[0];
+            return `${today}T${formData.deliveryTime}:00`;
+          } else {
+            // Para pedidos sem horário específico, usar horário atual + 30 min
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30);
+            return now.toISOString();
+          }
+        })(),
         scheduledDate: formData.deliveryType === 'scheduled' ? formData.deliveryDate : undefined,
         scheduledTime: formData.deliveryTime || undefined
       };

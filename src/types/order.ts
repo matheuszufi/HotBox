@@ -16,6 +16,8 @@ export interface Order {
   notes?: string;
   estimatedDeliveryTime?: string;
   deliveryType?: 'today' | 'scheduled';
+  deliveryDate: string; // Data de entrega (sempre preenchida)
+  deliveryDateTime?: string; // Data e hora combinadas para ordenação (ISO string)
   scheduledDate?: string;
   scheduledTime?: string;
   createdAt: string;
@@ -28,6 +30,8 @@ export interface CreateOrderData {
   paymentMethod: 'cash' | 'card' | 'pix';
   notes?: string;
   deliveryType?: 'today' | 'scheduled';
+  deliveryDate: string; // Data de entrega (sempre preenchida)
+  deliveryDateTime?: string; // Data e hora combinadas para ordenação
   scheduledDate?: string;
   scheduledTime?: string;
 }
