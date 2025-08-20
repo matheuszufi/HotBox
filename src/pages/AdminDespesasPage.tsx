@@ -11,10 +11,13 @@ import {
   Download,
   FileText,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  History,
+  User
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
-import { despesaService, type Despesa, type CreateDespesaData } from '../services/despesaService';
+import { despesaService, type Despesa, type CreateDespesaData, type DespesaHistorico } from '../services/despesaService';
+import { useAuth } from '../contexts/AuthContext';
 
 const categoriasDespesas = [
   {
@@ -76,6 +79,7 @@ const formasPagamento = [
 ];
 
 export default function AdminDespesasPage() {
+  const { user } = useAuth();
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,6 +87,8 @@ export default function AdminDespesasPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingDespesa, setEditingDespesa] = useState<Despesa | null>(null);
+  const [showHistorico, setShowHistorico] = useState(false);
+  const [historicoData, setHistoricoData] = useState<DespesaHistorico[]>([]);
 
   const [formData, setFormData] = useState({
     descricao: '',
@@ -169,6 +175,13 @@ export default function AdminDespesasPage() {
       status = 'vencido';
     }
 
+    // Verificar se o usuário está logado ou usar um usuário padrão para admin
+    const currentUser = user || {
+      uid: 'admin-default',
+      name: 'Administrador',
+      email: 'admin@hotbox.com'
+    };
+
     const despesaData: CreateDespesaData = {
       descricao: formData.descricao,
       categoria: formData.categoria,
@@ -181,13 +194,26 @@ export default function AdminDespesasPage() {
       status,
       recorrente: formData.recorrente,
       frequencia: formData.recorrente ? (formData.frequencia as any) : undefined,
-      observacoes: formData.observacoes || undefined
+      observacoes: formData.observacoes || undefined,
+      criadoPor: {
+        usuarioId: currentUser.uid,
+        usuarioNome: currentUser.name,
+        usuarioEmail: currentUser.email
+      }
     };
 
     try {
       setLoading(true);
       if (editingDespesa && editingDespesa.id) {
-        await despesaService.updateDespesa(editingDespesa.id, despesaData);
+        await despesaService.updateDespesa(
+          editingDespesa.id, 
+          despesaData,
+          {
+            usuarioId: currentUser.uid,
+            usuarioNome: currentUser.name,
+            usuarioEmail: currentUser.email
+          }
+        );
         alert('Despesa atualizada com sucesso!');
       } else {
         await despesaService.createDespesa(despesaData);
@@ -246,6 +272,32 @@ export default function AdminDespesasPage() {
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       alert('Erro ao atualizar status da despesa');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShowHistorico = async (despesaId: string) => {
+    try {
+      setLoading(true);
+      console.log('📋 Carregando histórico para despesa:', despesaId);
+      
+      const historico = await despesaService.getHistoricoDespesa(despesaId);
+      setHistoricoData(historico);
+      setShowHistorico(true);
+      
+      if (historico.length === 0) {
+        console.log('ℹ️ Nenhum histórico encontrado - primeira vez acessando ou coleção vazia');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar histórico:', error);
+      
+      // Mostrar histórico vazio ao invés de erro
+      setHistoricoData([]);
+      setShowHistorico(true);
+      
+      // Alert mais informativo
+      alert('Histórico não disponível no momento. A funcionalidade pode estar sendo configurada.');
     } finally {
       setLoading(false);
     }
@@ -578,6 +630,36 @@ export default function AdminDespesasPage() {
               {editingDespesa ? 'Editar Despesa' : 'Nova Despesa'}
             </h2>
             
+            {/* Informações do Criador - apenas no modo edição */}
+            {editingDespesa && editingDespesa.criadoPor && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User size={16} className="text-gray-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Criado por: {editingDespesa.criadoPor.usuarioNome}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {editingDespesa.criadoPor.usuarioEmail}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatDate(editingDespesa.createdAt.split('T')[0])}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleShowHistorico(editingDespesa.id!)}
+                    className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition duration-200"
+                  >
+                    <History size={14} />
+                    Histórico
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Descrição</label>
@@ -742,6 +824,87 @@ export default function AdminDespesasPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal do Histórico */}
+      {showHistorico && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Histórico de Alterações</h2>
+              <button
+                onClick={() => setShowHistorico(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {historicoData.length === 0 ? (
+              <div className="text-center py-8">
+                <History className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-500 mb-2">Nenhuma alteração registrada</p>
+                <p className="text-xs text-gray-400">
+                  O histórico será criado automaticamente quando você fizer alterações na despesa
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {historicoData.map((item) => (
+                  <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          item.acao === 'criacao' ? 'bg-green-500' :
+                          item.acao === 'edicao' ? 'bg-blue-500' :
+                          item.acao === 'status_change' ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}></div>
+                        <span className="font-medium capitalize">
+                          {item.acao.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {new Date(item.dataHora).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    
+                    <p className="text-gray-700 mb-2">{item.descricaoAlteracao}</p>
+                    
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <User size={14} />
+                      <span>{item.usuarioNome}</span>
+                    </div>
+                    
+                    {item.dadosAnteriores && item.dadosNovos && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800">
+                          Ver detalhes das alterações
+                        </summary>
+                        <div className="mt-2 p-3 bg-gray-50 rounded text-xs">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-medium text-red-600 mb-1">Antes:</h4>
+                              <pre className="whitespace-pre-wrap">
+                                {JSON.stringify(item.dadosAnteriores, null, 2)}
+                              </pre>
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-green-600 mb-1">Depois:</h4>
+                              <pre className="whitespace-pre-wrap">
+                                {JSON.stringify(item.dadosNovos, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -11,6 +11,18 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+export interface DespesaHistorico {
+  id: string;
+  despesaId: string;
+  acao: 'criacao' | 'edicao' | 'status_change' | 'exclusao';
+  descricaoAlteracao: string;
+  usuarioId: string;
+  usuarioNome: string;
+  dataHora: string;
+  dadosAnteriores?: any;
+  dadosNovos?: any;
+}
+
 export interface Despesa {
   id?: string;
   descricao: string;
@@ -28,6 +40,17 @@ export interface Despesa {
   comprovante?: string;
   createdAt: string;
   updatedAt?: string;
+  // Informações de auditoria
+  criadoPor: {
+    usuarioId: string;
+    usuarioNome: string;
+    usuarioEmail: string;
+  };
+  alteradoPor?: {
+    usuarioId: string;
+    usuarioNome: string;
+    usuarioEmail: string;
+  };
 }
 
 export interface CreateDespesaData {
@@ -43,6 +66,13 @@ export interface CreateDespesaData {
   recorrente: boolean;
   frequencia?: 'mensal' | 'trimestral' | 'semestral' | 'anual';
   observacoes?: string;
+  comprovante?: string;
+  // Informações do usuário que está criando
+  criadoPor: {
+    usuarioId: string;
+    usuarioNome: string;
+    usuarioEmail: string;
+  };
 }
 
 class DespesaService {
@@ -61,7 +91,8 @@ class DespesaService {
         status: despesaData.status,
         recorrente: despesaData.recorrente,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        criadoPor: despesaData.criadoPor
       };
 
       // Adicionar campos opcionais apenas se tiverem valor
@@ -86,6 +117,9 @@ class DespesaService {
 
       const docRef = await addDoc(collection(db, this.collectionName), cleanData);
       console.log('✅ Despesa criada com sucesso. ID:', docRef.id);
+      
+      // Criar histórico de criação
+      await this.createHistoricoEntry(docRef.id, 'criacao', 'Despesa criada', despesaData.criadoPor.usuarioId, despesaData.criadoPor.usuarioNome, null, cleanData);
       
       return docRef.id;
     } catch (error) {
@@ -122,13 +156,47 @@ class DespesaService {
     }
   }
 
-  async updateDespesa(id: string, despesaData: Partial<CreateDespesaData>): Promise<void> {
+  async getDespesaById(id: string): Promise<Despesa | null> {
+    try {
+      console.log('🔄 Buscando despesa por ID:', id);
+      
+      const docSnap = await getDocs(query(collection(db, this.collectionName)));
+      
+      const despesa = docSnap.docs.find(doc => doc.id === id);
+      
+      if (despesa) {
+        return {
+          id: despesa.id,
+          ...despesa.data()
+        } as Despesa;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Erro ao buscar despesa por ID:', error);
+      throw new Error('Erro ao buscar despesa no Firebase');
+    }
+  }
+
+  async updateDespesa(
+    id: string, 
+    despesaData: Partial<CreateDespesaData>,
+    alteradoPor: {
+      usuarioId: string;
+      usuarioNome: string;
+      usuarioEmail: string;
+    }
+  ): Promise<void> {
     try {
       console.log('🔄 Atualizando despesa:', id, despesaData);
       
+      // Buscar dados atuais para histórico
+      const despesaAtual = await this.getDespesaById(id);
+      
       // Criar objeto limpo removendo campos undefined
       const cleanData: any = {
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        alteradoPor
       };
 
       // Adicionar apenas campos que têm valor
@@ -171,6 +239,18 @@ class DespesaService {
       
       const despesaRef = doc(db, this.collectionName, id);
       await updateDoc(despesaRef, cleanData);
+      
+      // Criar histórico de edição
+      await this.createHistoricoEntry(
+        id, 
+        'edicao', 
+        'Despesa editada', 
+        alteradoPor.usuarioId, 
+        alteradoPor.usuarioNome, 
+        despesaAtual, 
+        cleanData
+      );
+      
       console.log('✅ Despesa atualizada com sucesso');
     } catch (error) {
       console.error('❌ Erro ao atualizar despesa:', error);
@@ -306,6 +386,74 @@ class DespesaService {
     } catch (error) {
       console.error('❌ Erro ao buscar despesas vencidas:', error);
       throw new Error('Erro ao buscar despesas vencidas no Firebase');
+    }
+  }
+
+  // Métodos para gerenciar histórico de alterações
+  async createHistoricoEntry(
+    despesaId: string,
+    acao: DespesaHistorico['acao'],
+    descricaoAlteracao: string,
+    usuarioId: string,
+    usuarioNome: string,
+    dadosAnteriores?: any,
+    dadosNovos?: any
+  ): Promise<void> {
+    try {
+      const historicoData: Omit<DespesaHistorico, 'id'> = {
+        despesaId,
+        acao,
+        descricaoAlteracao,
+        usuarioId,
+        usuarioNome,
+        dataHora: new Date().toISOString(),
+        dadosAnteriores,
+        dadosNovos
+      };
+
+      // Tentar criar a coleção se não existir
+      const historicoRef = collection(db, 'despesas_historico');
+      await addDoc(historicoRef, historicoData);
+      console.log('✅ Entrada de histórico criada para despesa:', despesaId);
+    } catch (error) {
+      console.error('❌ Erro ao criar entrada de histórico:', error);
+      console.log('⚠️ Continuando sem salvar histórico - pode ser problema de permissões');
+      // Não vamos lançar erro aqui para não impactar a operação principal
+    }
+  }
+
+  async getHistoricoDespesa(despesaId: string): Promise<DespesaHistorico[]> {
+    try {
+      console.log('🔄 Buscando histórico da despesa:', despesaId);
+      
+      // Primeiro, tentar buscar sem orderBy para verificar se há problemas com índices
+      const historicoRef = collection(db, 'despesas_historico');
+      const q = query(
+        historicoRef,
+        where('despesaId', '==', despesaId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const historico: DespesaHistorico[] = [];
+
+      querySnapshot.forEach((doc) => {
+        historico.push({
+          id: doc.id,
+          ...doc.data()
+        } as DespesaHistorico);
+      });
+
+      // Ordenar manualmente por dataHora em ordem decrescente
+      historico.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
+
+      console.log(`✅ ${historico.length} entradas de histórico encontradas`);
+      return historico;
+    } catch (error) {
+      console.error('❌ Erro ao buscar histórico da despesa:', error);
+      
+      // Se der erro, retornar array vazio ao invés de throw
+      console.log('⚠️ Retornando array vazio devido ao erro');
+      return [];
     }
   }
 }
