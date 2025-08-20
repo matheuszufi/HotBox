@@ -16,7 +16,8 @@ import {
   AdminStockPage,
   AdminFinancePage,
   AdminDREPage,
-  AdminFluxoCaixaPage
+  AdminFluxoCaixaPage,
+  AdminDespesasPage
 } from './pages';
 
 // Create a client for React Query
@@ -129,6 +130,17 @@ function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Layout>
                       <AdminStockPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/despesas" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Layout>
+                      <AdminDespesasPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
