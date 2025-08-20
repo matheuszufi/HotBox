@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus,
   Search,
@@ -14,24 +14,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
-
-interface Despesa {
-  id: string;
-  descricao: string;
-  categoria: string;
-  subcategoria?: string;
-  fornecedor?: string;
-  valor: number;
-  dataVencimento: string;
-  dataPagamento?: string;
-  formaPagamento?: string;
-  status: 'pendente' | 'pago' | 'vencido' | 'cancelado';
-  recorrente: boolean;
-  frequencia?: 'mensal' | 'trimestral' | 'semestral' | 'anual';
-  observacoes?: string;
-  comprovante?: string;
-  createdAt: string;
-}
+import { despesaService, type Despesa, type CreateDespesaData } from '../services/despesaService';
 
 const categoriasDespesas = [
   {
@@ -94,6 +77,7 @@ const formasPagamento = [
 
 export default function AdminDespesasPage() {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -122,7 +106,10 @@ export default function AdminDespesasPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    // Para evitar problemas de fuso horário, vamos tratar a data como local
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('pt-BR');
   };
 
   const resetForm = () => {
@@ -141,6 +128,24 @@ export default function AdminDespesasPage() {
     });
     setEditingDespesa(null);
     setShowForm(false);
+  };
+
+  // Carregar despesas do Firebase
+  useEffect(() => {
+    loadDespesas();
+  }, []);
+
+  const loadDespesas = async () => {
+    try {
+      setLoading(true);
+      const despesasData = await despesaService.getAllDespesas();
+      setDespesas(despesasData);
+    } catch (error) {
+      console.error('Erro ao carregar despesas:', error);
+      alert('Erro ao carregar despesas');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,8 +169,7 @@ export default function AdminDespesasPage() {
       status = 'vencido';
     }
 
-    const despesaData: Despesa = {
-      id: editingDespesa?.id || Date.now().toString(),
+    const despesaData: CreateDespesaData = {
       descricao: formData.descricao,
       categoria: formData.categoria,
       subcategoria: formData.subcategoria || undefined,
@@ -177,22 +181,26 @@ export default function AdminDespesasPage() {
       status,
       recorrente: formData.recorrente,
       frequencia: formData.recorrente ? (formData.frequencia as any) : undefined,
-      observacoes: formData.observacoes || undefined,
-      createdAt: editingDespesa?.createdAt || new Date().toISOString()
+      observacoes: formData.observacoes || undefined
     };
 
     try {
-      if (editingDespesa) {
-        setDespesas(prev => prev.map(d => d.id === editingDespesa.id ? despesaData : d));
+      setLoading(true);
+      if (editingDespesa && editingDespesa.id) {
+        await despesaService.updateDespesa(editingDespesa.id, despesaData);
+        alert('Despesa atualizada com sucesso!');
       } else {
-        setDespesas(prev => [despesaData, ...prev]);
+        await despesaService.createDespesa(despesaData);
+        alert('Despesa cadastrada com sucesso!');
       }
       
       resetForm();
-      alert(editingDespesa ? 'Despesa atualizada com sucesso!' : 'Despesa cadastrada com sucesso!');
+      await loadDespesas(); // Recarregar a lista
     } catch (error) {
       console.error('Erro ao salvar despesa:', error);
       alert('Erro ao salvar despesa');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -214,23 +222,33 @@ export default function AdminDespesasPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-      setDespesas(prev => prev.filter(d => d.id !== id));
+      try {
+        setLoading(true);
+        await despesaService.deleteDespesa(id);
+        await loadDespesas(); // Recarregar a lista
+        alert('Despesa excluída com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir despesa:', error);
+        alert('Erro ao excluir despesa');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: Despesa['status']) => {
-    setDespesas(prev => prev.map(d => {
-      if (d.id === id) {
-        const updated = { ...d, status: newStatus };
-        if (newStatus === 'pago' && !d.dataPagamento) {
-          updated.dataPagamento = new Date().toISOString().split('T')[0];
-        }
-        return updated;
-      }
-      return d;
-    }));
+  const handleStatusChange = async (id: string, newStatus: Despesa['status']) => {
+    try {
+      setLoading(true);
+      await despesaService.updateDespesaStatus(id, newStatus);
+      await loadDespesas(); // Recarregar a lista
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      alert('Erro ao atualizar status da despesa');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredDespesas = despesas.filter(despesa => {
@@ -250,23 +268,52 @@ export default function AdminDespesasPage() {
   const despesasPagas = filteredDespesas.filter(d => d.status === 'pago').length;
 
   const exportToCSV = () => {
-    const headers = ['Descrição', 'Categoria', 'Subcategoria', 'Fornecedor', 'Valor', 'Vencimento', 'Pagamento', 'Status', 'Forma Pagto'];
+    const headers = [
+      'Descrição',
+      'Categoria', 
+      'Subcategoria',
+      'Fornecedor',
+      'Valor (R$)',
+      'Data Vencimento',
+      'Data Pagamento',
+      'Status',
+      'Forma Pagamento',
+      'Recorrente',
+      'Frequência',
+      'Observações'
+    ];
+    
+    // Função para escapar campos CSV
+    const escapeCSV = (field: any) => {
+      if (field === null || field === undefined) return '';
+      const str = String(field);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
     const csvContent = [
-      headers.join(','),
+      headers.map(escapeCSV).join(','),
       ...filteredDespesas.map(despesa => [
-        despesa.descricao,
-        despesa.categoria,
-        despesa.subcategoria || '',
-        despesa.fornecedor || '',
-        despesa.valor.toFixed(2),
-        formatDate(despesa.dataVencimento),
-        despesa.dataPagamento ? formatDate(despesa.dataPagamento) : '',
-        despesa.status,
-        despesa.formaPagamento || ''
+        escapeCSV(despesa.descricao),
+        escapeCSV(despesa.categoria),
+        escapeCSV(despesa.subcategoria || ''),
+        escapeCSV(despesa.fornecedor || ''),
+        escapeCSV(`R$ ${despesa.valor.toFixed(2).replace('.', ',')}`),
+        escapeCSV(formatDate(despesa.dataVencimento)),
+        escapeCSV(despesa.dataPagamento ? formatDate(despesa.dataPagamento) : ''),
+        escapeCSV(despesa.status === 'pago' ? 'Pago' : despesa.status === 'pendente' ? 'Pendente' : 'Vencido'),
+        escapeCSV(despesa.formaPagamento || ''),
+        escapeCSV(despesa.recorrente ? 'Sim' : 'Não'),
+        escapeCSV(despesa.frequencia || ''),
+        escapeCSV(despesa.observacoes || '')
       ].join(','))
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Adicionar BOM para garantir encoding correto no Excel
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -278,6 +325,16 @@ export default function AdminDespesasPage() {
   };
 
   const selectedCategoriaData = categoriasDespesas.find(cat => cat.categoria === formData.categoria);
+
+  if (loading && despesas.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -471,7 +528,7 @@ export default function AdminDespesasPage() {
                       <td className="py-3 px-4 text-center">
                         <select
                           value={despesa.status}
-                          onChange={(e) => handleStatusChange(despesa.id, e.target.value as Despesa['status'])}
+                          onChange={(e) => despesa.id && handleStatusChange(despesa.id, e.target.value as Despesa['status'])}
                           className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${
                             statusDespesa.find(s => s.value === despesa.status)?.color
                           }`}
@@ -492,7 +549,7 @@ export default function AdminDespesasPage() {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => handleDelete(despesa.id)}
+                            onClick={() => despesa.id && handleDelete(despesa.id)}
                             className="text-red-600 hover:text-red-800"
                           >
                             <Trash2 size={16} />
