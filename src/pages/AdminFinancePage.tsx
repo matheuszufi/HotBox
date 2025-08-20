@@ -768,7 +768,7 @@ export default function AdminFinancePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Receita Total</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-black">
                   {formatPrice(stats.totalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{getPeriodLabel(selectedPeriod)}</p>
@@ -785,7 +785,7 @@ export default function AdminFinancePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Despesas</p>
-                <p className="text-2xl font-bold text-red-500">
+                <p className="text-2xl font-bold text-black">
                   {formatPrice(stats.totalExpenses)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{getPeriodLabel(selectedPeriod)}</p>
@@ -804,7 +804,7 @@ export default function AdminFinancePage() {
                 <p className="text-sm font-medium text-gray-600">
                   {stats.profitLoss >= 0 ? 'Lucro' : 'Prejuízo'}
                 </p>
-                <p className={`text-2xl font-bold ${stats.profitLoss >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                <p className="text-2xl font-bold text-black">
                   {formatPrice(Math.abs(stats.profitLoss))}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">receita - despesas</p>
@@ -824,7 +824,7 @@ export default function AdminFinancePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Margem</p>
-                <p className={`text-2xl font-bold ${stats.profitMargin >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                <p className="text-2xl font-bold text-black">
                   {stats.profitMargin.toFixed(1)}%
                 </p>
                 <p className="text-xs text-gray-500 mt-1">margem de lucro</p>
