@@ -3,15 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft,
   ArrowUpDown,
-  TrendingUp,
-  Calendar,
-  DollarSign,
-  Download,
-  Filter,
-  PlusCircle,
-  MinusCircle
+  Download
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { orderService } from '../services/orderService';
 import { despesaService, type Despesa } from '../services/despesaService';
 import type { Order } from '../types/order';
@@ -294,188 +287,160 @@ export default function AdminFluxoCaixaPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/admin/finance')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            Voltar
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ArrowUpDown size={28} />
-              Fluxo de Caixa
-            </h1>
-            <p className="text-gray-600 text-sm">Controle de entradas e saídas financeiras</p>
+    <div className="min-h-screen bg-gray-100">
+      {/* Header Empresarial Compacto */}
+      <div className="bg-white shadow-sm border-b border-gray-300">
+        <div className="container mx-auto px-6 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/admin/finance')}
+                className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium"
+              >
+                <ArrowLeft size={16} className="inline mr-1" />
+                Voltar
+              </button>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <div className="flex items-center gap-2">
+                <ArrowUpDown size={18} className="text-red-600" />
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">Fluxo de Caixa</h1>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={exportToPDF}
+              className="bg-red-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-1.5"
+            >
+              <Download size={14} />
+              Exportar
+            </button>
           </div>
         </div>
-        <button
-          onClick={exportToPDF}
-          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-orange-600 transition duration-200 flex items-center gap-2 shadow-md text-sm"
-        >
-          <Download size={18} />
-          Exportar PDF
-        </button>
       </div>
 
-      {/* Filtros de Período */}
-      <div className="flex flex-wrap gap-4 mb-4 items-center">
-        <span className="text-sm font-medium text-gray-700 flex items-center">
-          <Filter size={16} className="mr-1" />
-          Período:
-        </span>
-        <div className="flex gap-2 items-center">
-          <label className="text-sm font-medium text-gray-600">De:</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            max={endDate}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
-          />
+      <div className="container mx-auto px-6 py-4">
+        {/* Filtros Compactos */}
+        <div className="bg-white border border-gray-300 rounded p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Período:</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-600">De:</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  max={endDate}
+                  className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-600">Até:</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+              <div className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                {formatDate(startDate)} - {formatDate(endDate)}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
-          <label className="text-sm font-medium text-gray-600">Até:</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            min={startDate}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
-          />
+
+        {/* Resumo Geral Compacto */}
+        <div className="grid md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white border border-gray-300 rounded p-3">
+            <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Saldo Inicial</div>
+            <div className="text-lg font-bold text-gray-900">{formatPrice(cashFlowData.saldoInicial)}</div>
+          </div>
+
+          <div className="bg-white border border-gray-300 rounded p-3">
+            <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Total Entradas</div>
+            <div className="text-lg font-bold text-gray-900">{formatPrice(cashFlowData.totalEntradas)}</div>
+          </div>
+
+          <div className="bg-white border border-gray-300 rounded p-3">
+            <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Total Saídas</div>
+            <div className="text-lg font-bold text-gray-900">{formatPrice(cashFlowData.totalSaidas)}</div>
+          </div>
+
+          <div className="bg-white border border-gray-300 rounded p-3">
+            <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Saldo Final</div>
+            <div className={`text-lg font-bold ${cashFlowData.saldoFinal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatPrice(cashFlowData.saldoFinal)}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Resumo Geral */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">Saldo Inicial</p>
-                <p className="text-lg font-bold text-black">{formatPrice(cashFlowData.saldoInicial)}</p>
-              </div>
-              <DollarSign className="h-6 w-6 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Fluxo Diário Empresarial */}
+        <div className="bg-white border border-gray-300 rounded overflow-hidden">
+          <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 border-b">
+            <h2 className="text-sm font-bold uppercase tracking-wide">Fluxo de Caixa</h2>
+          </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">Total Entradas</p>
-                <p className="text-lg font-bold text-black">{formatPrice(cashFlowData.totalEntradas)}</p>
-              </div>
-              <PlusCircle className="h-6 w-6 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">Total Saídas</p>
-                <p className="text-lg font-bold text-black">{formatPrice(cashFlowData.totalSaidas)}</p>
-              </div>
-              <MinusCircle className="h-6 w-6 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">Saldo Final</p>
-                <p className="text-lg font-bold text-black">
-                  {formatPrice(cashFlowData.saldoFinal)}
-                </p>
-              </div>
-              <TrendingUp className={`h-6 w-6 ${cashFlowData.saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Fluxo Diário */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar size={18} />
-            Fluxo de Caixa Diário - {formatDate(startDate)} até {formatDate(endDate)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gradient-to-r from-red-50 to-orange-50">
-                  <th className="text-left py-2 px-3 font-semibold text-gray-700">Data</th>
-                  <th className="text-right py-2 px-3 font-semibold text-black">Entradas</th>
-                  <th className="text-right py-2 px-3 font-semibold text-black">Saídas</th>
-                  <th className="text-right py-2 px-3 font-semibold text-black">Saldo Diário</th>
-                  <th className="text-right py-2 px-3 font-semibold text-black">Saldo Acumulado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cashFlowData.fluxoDiario.map((entry, index) => (
-                  <tr key={entry.date} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-25' : ''}`}>
-                    <td className="py-2 px-3 text-gray-900">{formatDate(entry.date)}</td>
-                    <td className="py-2 px-3 text-right text-black font-medium">
-                      {entry.entradas > 0 ? formatPrice(entry.entradas) : '-'}
+          <div className="p-3">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-300">
+                    <th className="text-left py-2 font-bold text-gray-900 uppercase text-xs">Data</th>
+                    <th className="text-right py-2 font-bold text-gray-900 uppercase text-xs">Entradas</th>
+                    <th className="text-right py-2 font-bold text-gray-900 uppercase text-xs">Saídas</th>
+                    <th className="text-right py-2 font-bold text-gray-900 uppercase text-xs">Saldo Diário</th>
+                    <th className="text-right py-2 font-bold text-gray-900 uppercase text-xs">Saldo Acumulado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cashFlowData.fluxoDiario.map((entry) => (
+                    <tr key={entry.date} className="hover:bg-gray-50">
+                      <td className="py-1.5 text-gray-700">{formatDate(entry.date)}</td>
+                      <td className="py-1.5 text-right font-medium text-gray-900">
+                        {entry.entradas > 0 ? formatPrice(entry.entradas) : '-'}
+                      </td>
+                      <td className="py-1.5 text-right font-medium text-gray-900">
+                        {entry.saidas > 0 ? formatPrice(entry.saidas) : '-'}
+                      </td>
+                      <td className={`py-1.5 text-right font-medium ${entry.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatPrice(entry.saldo)}
+                      </td>
+                      <td className={`py-1.5 text-right font-bold ${entry.saldoAcumulado >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatPrice(entry.saldoAcumulado)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+                    <td className="py-2 font-bold text-sm">TOTAL</td>
+                    <td className="py-2 text-right font-bold text-sm">{formatPrice(cashFlowData.totalEntradas)}</td>
+                    <td className="py-2 text-right font-bold text-sm">{formatPrice(cashFlowData.totalSaidas)}</td>
+                    <td className="py-2 text-right font-bold text-sm">
+                      {formatPrice(cashFlowData.totalEntradas - cashFlowData.totalSaidas)}
                     </td>
-                    <td className="py-2 px-3 text-right text-black font-medium">
-                      {entry.saidas > 0 ? formatPrice(entry.saidas) : '-'}
-                    </td>
-                    <td className={`py-2 px-3 text-right font-medium ${entry.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPrice(entry.saldo)}
-                    </td>
-                    <td className={`py-2 px-3 text-right font-bold ${entry.saldoAcumulado >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPrice(entry.saldoAcumulado)}
+                    <td className="py-2 text-right font-bold text-sm">
+                      {formatPrice(cashFlowData.saldoFinal)}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-gradient-to-r from-red-50 to-orange-50 font-bold">
-                  <td className="py-2 px-3 text-gray-900">TOTAL</td>
-                  <td className="py-2 px-3 text-right text-black">{formatPrice(cashFlowData.totalEntradas)}</td>
-                  <td className="py-2 px-3 text-right text-black">{formatPrice(cashFlowData.totalSaidas)}</td>
-                  <td className={`py-2 px-3 text-right ${(cashFlowData.totalEntradas - cashFlowData.totalSaidas) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPrice(cashFlowData.totalEntradas - cashFlowData.totalSaidas)}
-                  </td>
-                  <td className={`py-2 px-3 text-right ${cashFlowData.saldoFinal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPrice(cashFlowData.saldoFinal)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Observações */}
-      <Card className="mt-4">
-        <CardContent className="pt-4">
-          <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 p-3 rounded-lg">
-            <h4 className="font-semibold text-black mb-2 text-sm">💡 Observações:</h4>
-            <ul className="text-xs text-black space-y-1">
-              <li>• <strong>Entradas:</strong> Receita total dos pedidos entregues (status confirmado)</li>
-              <li>• <strong>Saídas:</strong> Despesas pagas registradas no sistema</li>
-              <li>• <strong>Período:</strong> Baseado na data de entrega dos pedidos e data de pagamento das despesas</li>
-              <li>• <strong>Saldo:</strong> Diferença entre entradas e saídas reais do período</li>
-              <li>• <strong>Dados:</strong> Coletados diretamente do Firebase em tempo real</li>
-              <li>• <strong>Períodos Futuros:</strong> Possível analisar datas futuras (sem dados aparecem zerados)</li>
-            </ul>
+        {/* Notas Compactas */}
+        <div className="bg-gray-50 border border-gray-300 rounded p-3 mt-4">
+          <div className="text-xs text-gray-600">
+            <strong>Notas:</strong> Demonstração baseada em dados reais de receitas (pedidos entregues) e despesas pagas. 
+            Período analisado de {formatDate(startDate)} até {formatDate(endDate)}. 
+            Entradas = receita de pedidos confirmados, Saídas = despesas efetivamente pagas.
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
