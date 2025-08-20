@@ -394,9 +394,9 @@ export function AdminOrdersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
-                  <p className="text-2xl font-bold text-blue-600">{orders.length}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">{orders.length}</p>
                 </div>
-                <Package className="h-8 w-8 text-blue-600" />
+                <Package className="h-8 w-8 text-red-500" />
               </div>
             </CardContent>
           </Card>
@@ -406,14 +406,16 @@ export function AdminOrdersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                     R$ {orders
                       .filter(order => order.status !== 'cancelled' && order.status !== 'pending')
                       .reduce((sum, order) => sum + order.total, 0)
                       .toFixed(2)}
                   </p>
                 </div>
-                <Package className="h-8 w-8 text-green-600" />
+                <div className="p-2 bg-gradient-to-r from-red-100 to-orange-100 rounded-full">
+                  <Package className="h-8 w-8 text-red-500" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -423,11 +425,11 @@ export function AdminOrdersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Clientes</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-orange-500">
                     {new Set(orders.map(order => order.userId)).size}
                   </p>
                 </div>
-                <Users className="h-8 w-8 text-purple-600" />
+                <Users className="h-8 w-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
@@ -451,7 +453,7 @@ export function AdminOrdersPage() {
             {orders.map((order) => (
               <Card key={order.id} className="overflow-hidden">
                 <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
                     {/* Informações principais */}
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
@@ -583,7 +585,7 @@ export function AdminOrdersPage() {
                     <div className="lg:ml-6 lg:text-right">
                       <div className="bg-primary-50 rounded-lg p-4">
                         <p className="text-sm text-gray-600 mb-1">Total do pedido</p>
-                        <p className="text-2xl font-bold text-primary-600">
+                        <p className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                           R$ {order.total.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">

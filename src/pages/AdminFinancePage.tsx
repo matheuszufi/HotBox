@@ -15,7 +15,8 @@ import {
   FileText,
   ArrowUpDown,
   Percent,
-  ShoppingCart
+  ShoppingCart,
+  Scale
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { orderService } from '../services/orderService';
@@ -704,14 +705,21 @@ export default function AdminFinancePage() {
       <div className="flex flex-wrap gap-4 mb-8">
         <button
           onClick={() => navigate('/admin/dre')}
-          className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
+          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
         >
           <FileText size={20} />
           DRE - Demonstração do Resultado
         </button>
         <button
+          onClick={() => navigate('/admin/balanco-patrimonial')}
+          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
+        >
+          <Scale size={20} />
+          Balanço Patrimonial
+        </button>
+        <button
           onClick={() => navigate('/admin/fluxo-caixa')}
-          className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
+          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
         >
           <ArrowUpDown size={20} />
           Fluxo de Caixa
@@ -742,7 +750,7 @@ export default function AdminFinancePage() {
               onClick={() => setSelectedPeriod(period.value as typeof selectedPeriod)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 selectedPeriod === period.value
-                  ? 'bg-orange-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -753,8 +761,8 @@ export default function AdminFinancePage() {
       </div>
 
       {/* Cards de Estatísticas Principais */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        {/* Linha Superior: Receita Total, Despesa Total, Diferença */}
+      {/* Primeira linha: Receita Total, Total Despesas, Prejuízo/Lucro, Margem */}
+      <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -777,7 +785,7 @@ export default function AdminFinancePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Despesas</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-red-500">
                   {formatPrice(stats.totalExpenses)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{getPeriodLabel(selectedPeriod)}</p>
@@ -796,14 +804,14 @@ export default function AdminFinancePage() {
                 <p className="text-sm font-medium text-gray-600">
                   {stats.profitLoss >= 0 ? 'Lucro' : 'Prejuízo'}
                 </p>
-                <p className={`text-2xl font-bold ${stats.profitLoss >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className={`text-2xl font-bold ${stats.profitLoss >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                   {formatPrice(Math.abs(stats.profitLoss))}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">receita - despesas</p>
               </div>
-              <div className={`p-3 rounded-full ${stats.profitLoss >= 0 ? 'bg-blue-100' : 'bg-red-100'}`}>
+              <div className={`p-3 rounded-full ${stats.profitLoss >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                 {stats.profitLoss >= 0 ? 
-                  <TrendingUp className="text-blue-600" size={24} /> : 
+                  <TrendingUp className="text-green-600" size={24} /> : 
                   <TrendingDown className="text-red-600" size={24} />
                 }
               </div>
@@ -811,13 +819,12 @@ export default function AdminFinancePage() {
           </CardContent>
         </Card>
 
-        {/* Linha Inferior: Margem, Total de Pedidos, Ticket Médio */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Margem</p>
-                <p className={`text-2xl font-bold ${stats.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-2xl font-bold ${stats.profitMargin >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                   {stats.profitMargin.toFixed(1)}%
                 </p>
                 <p className="text-xs text-gray-500 mt-1">margem de lucro</p>
@@ -828,19 +835,22 @@ export default function AdminFinancePage() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Segunda linha: Total de Pedidos, Ticket Médio, Total de Descontos */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-black">
                   {stats.totalOrders}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{getPeriodLabel(selectedPeriod)}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <ShoppingCart className="text-blue-600" size={24} />
+              <div className="p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-full">
+                <ShoppingCart className="text-red-600" size={24} />
               </div>
             </div>
           </CardContent>
@@ -851,33 +861,30 @@ export default function AdminFinancePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Ticket Médio</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-black">
                   {formatPrice(stats.averageOrderValue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">por pedido</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Target className="text-purple-600" size={24} />
+              <div className="p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-full">
+                <Target className="text-red-600" size={24} />
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Card separado para Total de Descontos */}
-      <div className="grid md:grid-cols-1 gap-6 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total de Descontos</p>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-2xl font-bold text-black">
                   {formatPrice(stats.totalDiscounts)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">total concedido no período</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Percent className="text-orange-600" size={24} />
+              <div className="p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-full">
+                <Percent className="text-red-600" size={24} />
               </div>
             </div>
           </CardContent>
