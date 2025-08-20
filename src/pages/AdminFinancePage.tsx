@@ -497,29 +497,100 @@ export default function AdminFinancePage() {
         </button>
       </div>
 
-      {/* Botões de Navegação Financeira */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button
+      {/* Navegação Financeira - Cards Elegantes */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div 
           onClick={() => navigate('/admin/dre')}
-          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
+          className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
         >
-          <FileText size={20} />
-          DRE - Demonstração do Resultado
-        </button>
-        <button
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300">
+                <FileText size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                  DRE
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Demonstração do Resultado
+                </p>
+              </div>
+            </div>
+            <div className="p-2 bg-gray-100 rounded-full group-hover:bg-red-100 transition-colors">
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500">
+              Análise de receitas, custos e lucros por período
+            </p>
+          </div>
+        </div>
+
+        <div 
           onClick={() => navigate('/admin/balanco-patrimonial')}
-          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
+          className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
         >
-          <Scale size={20} />
-          Balanço Patrimonial
-        </button>
-        <button
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300">
+                <Scale size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                  Balanço Patrimonial
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Posição Financeira
+                </p>
+              </div>
+            </div>
+            <div className="p-2 bg-gray-100 rounded-full group-hover:bg-red-100 transition-colors">
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500">
+              Ativos, passivos e patrimônio líquido
+            </p>
+          </div>
+        </div>
+
+        <div 
           onClick={() => navigate('/admin/fluxo-caixa')}
-          className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-red-400 hover:to-orange-400 transition duration-200 flex items-center gap-2"
+          className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
         >
-          <ArrowUpDown size={20} />
-          Fluxo de Caixa
-        </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300">
+                <ArrowUpDown size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                  Fluxo de Caixa
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Entradas e Saídas
+                </p>
+              </div>
+            </div>
+            <div className="p-2 bg-gray-100 rounded-full group-hover:bg-red-100 transition-colors">
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500">
+              Movimentação financeira diária detalhada
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Filtros de Data */}

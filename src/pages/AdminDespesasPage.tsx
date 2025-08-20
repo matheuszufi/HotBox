@@ -409,7 +409,7 @@ export default function AdminDespesasPage() {
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
+            className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-orange-600 transition duration-200 flex items-center gap-2"
           >
             <Plus size={18} />
             Nova Despesa
@@ -424,9 +424,11 @@ export default function AdminDespesasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Despesas</p>
-                <p className="text-2xl font-bold text-orange-600">{formatPrice(totalDespesas)}</p>
+                <p className="text-2xl font-bold text-black">{formatPrice(totalDespesas)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-orange-400" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -436,9 +438,11 @@ export default function AdminDespesasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pagas</p>
-                <p className="text-2xl font-bold text-green-600">{despesasPagas}</p>
+                <p className="text-2xl font-bold text-black">{despesasPagas}</p>
               </div>
-              <FileText className="h-8 w-8 text-green-400" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -448,9 +452,11 @@ export default function AdminDespesasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-600">{despesasPendentes}</p>
+                <p className="text-2xl font-bold text-black">{despesasPendentes}</p>
               </div>
-              <Calendar className="h-8 w-8 text-yellow-400" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -460,9 +466,11 @@ export default function AdminDespesasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Vencidas</p>
-                <p className="text-2xl font-bold text-red-600">{despesasVencidas}</p>
+                <p className="text-2xl font-bold text-black">{despesasVencidas}</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-red-400" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                <TrendingDown className="h-5 w-5 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -472,9 +480,11 @@ export default function AdminDespesasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Itens</p>
-                <p className="text-2xl font-bold text-blue-600">{filteredDespesas.length}</p>
+                <p className="text-2xl font-bold text-black">{filteredDespesas.length}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-blue-400" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -818,7 +828,7 @@ export default function AdminDespesasPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600"
                 >
                   {editingDespesa ? 'Atualizar' : 'Cadastrar'}
                 </button>

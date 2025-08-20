@@ -17,6 +17,7 @@ import {
   AdminFinancePage,
   AdminDREPage,
   AdminFluxoCaixaPage,
+  AdminBalancoPatrimonialPage,
   AdminDespesasPage
 } from './pages';
 
@@ -174,6 +175,17 @@ function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Layout>
                       <AdminFluxoCaixaPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/balanco-patrimonial" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Layout>
+                      <AdminBalancoPatrimonialPage />
                     </Layout>
                   </ProtectedRoute>
                 } 
