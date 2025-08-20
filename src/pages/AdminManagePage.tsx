@@ -13,7 +13,8 @@ import {
   ShoppingBag,
   UserCheck,
   Eye,
-  X
+  X,
+  TrendingUp
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { supplierService } from '../services/supplierService';
@@ -230,6 +231,53 @@ export default function AdminManagePage() {
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setShowUserModal(true);
+  };
+
+  // Função para obter pedidos do usuário
+  const getUserOrders = (userId: string) => {
+    return orders.filter(order => order.userId === userId);
+  };
+
+  // Função para calcular estatísticas do usuário
+  const getUserStats = (userId: string) => {
+    const userOrders = getUserOrders(userId);
+    const totalOrders = userOrders.length;
+    const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
+    const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    
+    // Produtos mais pedidos
+    const productCount: Record<string, { name: string; count: number; total: number }> = {};
+    userOrders.forEach(order => {
+      order.items.forEach(item => {
+        const key = item.menuItem.name;
+        if (!productCount[key]) {
+          productCount[key] = { name: item.menuItem.name, count: 0, total: 0 };
+        }
+        productCount[key].count += item.quantity;
+        productCount[key].total += item.menuItem.price * item.quantity;
+      });
+    });
+    
+    const favoriteProducts = Object.values(productCount)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Status dos pedidos
+    const statusCount = userOrders.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalOrders,
+      totalSpent,
+      averageOrderValue,
+      favoriteProducts,
+      statusCount,
+      lastOrderDate: userOrders.length > 0 
+        ? Math.max(...userOrders.map(order => new Date(order.createdAt).getTime()))
+        : null
+    };
   };
 
   // Handle image upload
@@ -1228,7 +1276,7 @@ export default function AdminManagePage() {
       {/* Modal de Detalhes do Usuário */}
       {showUserModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Detalhes do Usuário</h3>
               <button
@@ -1239,100 +1287,255 @@ export default function AdminManagePage() {
               </button>
             </div>
 
-            <div className="space-y-6">
-              {/* Informações Pessoais */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-800 mb-3">Informações Pessoais</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Nome</label>
-                    <p className="text-gray-900 font-medium">{selectedUser.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Email</label>
-                    <p className="text-gray-900">{selectedUser.email}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Telefone</label>
-                    <p className="text-gray-900">{selectedUser.phone || 'Não informado'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Tipo de Usuário</label>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      selectedUser.role === 'admin' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {selectedUser.role === 'admin' ? 'Administrador' : 'Cliente'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {(() => {
+              const userStats = getUserStats(selectedUser.uid);
+              const userOrders = getUserOrders(selectedUser.uid);
 
-              {/* Informações de Conta */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-800 mb-3">Informações da Conta</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">UID</label>
-                    <p className="text-gray-900 font-mono text-sm break-all">{selectedUser.uid}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Data de Criação</label>
-                    <p className="text-gray-900">
-                      {selectedUser.createdAt 
-                        ? new Date(selectedUser.createdAt).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        : 'Não disponível'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Status da Conta</label>
-                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Ativo
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">Email Verificado</label>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      selectedUser.emailVerified 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {selectedUser.emailVerified ? 'Verificado' : 'Não Verificado'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Endereço (se houver) */}
-              {selectedUser.address && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-3">Endereço</h4>
-                  <div className="bg-white p-3 rounded border">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              return (
+                <div className="space-y-6">
+                  {/* Informações Pessoais */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-3">Informações Pessoais</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <span className="font-medium text-gray-600">Endereço Completo:</span>
+                        <label className="block text-sm font-medium text-gray-600">Nome</label>
+                        <p className="text-gray-900 font-medium">{selectedUser.name}</p>
                       </div>
-                      <div className="md:col-span-2">
-                        <p className="text-gray-900">{selectedUser.address}</p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Email</label>
+                        <p className="text-gray-900">{selectedUser.email}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Telefone</label>
+                        <p className="text-gray-900">{selectedUser.phone || 'Não informado'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Tipo de Usuário</label>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedUser.role === 'admin' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {selectedUser.role === 'admin' ? 'Administrador' : 'Cliente'}
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Estatísticas CRM */}
+                  <div className="bg-gradient-to-br from-red-50 to-orange-50 p-4 rounded-lg border border-red-100">
+                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                      <TrendingUp className="mr-2 text-red-600" size={20} />
+                      Estatísticas do Cliente
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <div className="text-sm text-gray-600">Total de Pedidos</div>
+                        <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                          {userStats.totalOrders}
+                        </div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <div className="text-sm text-gray-600">Total Gasto</div>
+                        <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                          R$ {userStats.totalSpent.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <div className="text-sm text-gray-600">Ticket Médio</div>
+                        <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                          R$ {userStats.averageOrderValue.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <div className="text-sm text-gray-600">Último Pedido</div>
+                        <div className="text-sm font-medium text-gray-700">
+                          {userStats.lastOrderDate 
+                            ? new Date(userStats.lastOrderDate).toLocaleDateString('pt-BR')
+                            : 'Nunca'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Produtos Favoritos */}
+                  {userStats.favoriteProducts.length > 0 && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3">Produtos Mais Pedidos</h4>
+                      <div className="space-y-2">
+                        {userStats.favoriteProducts.map((product, index) => (
+                          <div key={product.name} className="flex justify-between items-center bg-white p-3 rounded border">
+                            <div className="flex items-center">
+                              <span className="bg-red-100 text-red-600 text-sm font-medium px-2 py-1 rounded mr-3">
+                                #{index + 1}
+                              </span>
+                              <span className="font-medium">{product.name}</span>
+                            </div>
+                            <div className="text-right text-sm">
+                              <div className="font-medium">{product.count}x pedidos</div>
+                              <div className="text-gray-600">R$ {product.total.toFixed(2)} total</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status dos Pedidos */}
+                  {Object.keys(userStats.statusCount).length > 0 && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3">Status dos Pedidos</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(userStats.statusCount).map(([status, count]) => (
+                          <span key={status} className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            status === 'delivered' ? 'bg-green-100 text-green-800' :
+                            status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                            status === 'preparing' ? 'bg-purple-100 text-purple-800' :
+                            status === 'ready' ? 'bg-indigo-100 text-indigo-800' :
+                            status === 'out-for-delivery' ? 'bg-orange-100 text-orange-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {status === 'delivered' ? 'Entregues' :
+                             status === 'pending' ? 'Pendentes' :
+                             status === 'cancelled' ? 'Cancelados' :
+                             status === 'confirmed' ? 'Confirmados' :
+                             status === 'preparing' ? 'Preparando' :
+                             status === 'ready' ? 'Prontos' :
+                             status === 'out-for-delivery' ? 'Saiu para entrega' : status} ({count})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Histórico de Pedidos */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-3">
+                      Histórico de Pedidos ({userOrders.length})
+                    </h4>
+                    {userOrders.length > 0 ? (
+                      <div className="max-h-96 overflow-y-auto">
+                        <div className="space-y-2">
+                          {userOrders.slice(0, 10).map((order) => (
+                            <div key={order.id} className="bg-white p-4 rounded border hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <div className="font-medium text-gray-900">Pedido #{order.id.slice(-8)}</div>
+                                  <div className="text-sm text-gray-600">
+                                    {new Date(order.createdAt).toLocaleString('pt-BR')}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold text-lg text-gray-900">R$ {order.total.toFixed(2)}</div>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                    order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                    order.status === 'preparing' ? 'bg-purple-100 text-purple-800' :
+                                    order.status === 'ready' ? 'bg-indigo-100 text-indigo-800' :
+                                    order.status === 'out-for-delivery' ? 'bg-orange-100 text-orange-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {order.status === 'delivered' ? 'Entregue' :
+                                     order.status === 'pending' ? 'Pendente' :
+                                     order.status === 'cancelled' ? 'Cancelado' :
+                                     order.status === 'confirmed' ? 'Confirmado' :
+                                     order.status === 'preparing' ? 'Preparando' :
+                                     order.status === 'ready' ? 'Pronto' :
+                                     order.status === 'out-for-delivery' ? 'Saiu para entrega' : order.status}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="border-t pt-2">
+                                <div className="text-sm text-gray-600">Itens:</div>
+                                <div className="mt-1 space-y-1">
+                                  {order.items.map((item, index) => (
+                                    <div key={index} className="flex justify-between text-sm">
+                                      <span>{item.quantity}x {item.menuItem.name}</span>
+                                      <span>R$ {(item.menuItem.price * item.quantity).toFixed(2)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {order.deliveryAddress && (
+                                  <div className="mt-2 text-sm text-gray-600">
+                                    <strong>Entrega:</strong> {order.deliveryAddress}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {userOrders.length > 10 && (
+                            <div className="text-center py-2 text-sm text-gray-600">
+                              Mostrando 10 de {userOrders.length} pedidos
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
+                        <p>Nenhum pedido encontrado</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Informações de Conta */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-3">Informações da Conta</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">UID</label>
+                        <p className="text-gray-900 font-mono text-sm break-all">{selectedUser.uid}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Data de Criação</label>
+                        <p className="text-gray-900">
+                          {selectedUser.createdAt 
+                            ? new Date(selectedUser.createdAt).toLocaleString('pt-BR')
+                            : 'Não disponível'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Status da Conta</label>
+                        <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Ativo
+                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600">Email Verificado</label>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedUser.emailVerified 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {selectedUser.emailVerified ? 'Verificado' : 'Não Verificado'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Endereço (se houver) */}
+                  {selectedUser.address && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3">Endereço</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-gray-900">{selectedUser.address}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setShowUserModal(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200"
+                className="px-6 py-2 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-md hover:from-red-700 hover:to-orange-600 transition duration-200"
               >
                 Fechar
               </button>
