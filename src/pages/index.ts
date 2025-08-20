@@ -14,3 +14,4 @@ export { default as AdminDREPage } from './AdminDREPage';
 export { default as AdminFluxoCaixaPage } from './AdminFluxoCaixaPage';
 export { default as AdminBalancoPatrimonialPage } from './AdminBalancoPatrimonialPage';
 export { default as AdminDespesasPage } from './AdminDespesasPage';
+export { default as AdminManagePage } from './AdminManagePage';

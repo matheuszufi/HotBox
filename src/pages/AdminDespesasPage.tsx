@@ -13,10 +13,13 @@ import {
   TrendingUp,
   TrendingDown,
   History,
-  User
+  User,
+  UserPlus
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { despesaService, type Despesa, type CreateDespesaData, type DespesaHistorico } from '../services/despesaService';
+import { supplierService } from '../services/supplierService';
+import type { Supplier } from '../types/stock';
 import { useAuth } from '../contexts/AuthContext';
 
 const categoriasDespesas = [
@@ -81,11 +84,13 @@ const formasPagamento = [
 export default function AdminDespesasPage() {
   const { user } = useAuth();
   const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [editingDespesa, setEditingDespesa] = useState<Despesa | null>(null);
   const [showHistorico, setShowHistorico] = useState(false);
   const [historicoData, setHistoricoData] = useState<DespesaHistorico[]>([]);
@@ -102,6 +107,16 @@ export default function AdminDespesasPage() {
     recorrente: false,
     frequencia: '',
     observacoes: ''
+  });
+
+  const [supplierFormData, setSupplierFormData] = useState({
+    name: '',
+    contact: '',
+    email: '',
+    phone: '',
+    address: '',
+    cnpj: '',
+    notes: ''
   });
 
   const formatPrice = (price: number) => {
@@ -136,9 +151,55 @@ export default function AdminDespesasPage() {
     setShowForm(false);
   };
 
+  const handleSubmitSupplier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await supplierService.createSupplier(supplierFormData);
+      
+      // Atualizar a lista de fornecedores
+      const updatedSuppliers = await supplierService.getSuppliers();
+      setSuppliers(updatedSuppliers);
+      
+      // Selecionar o fornecedor recém-criado no formulário principal
+      setFormData({ ...formData, fornecedor: supplierFormData.name });
+      
+      resetSupplierForm();
+      setShowSupplierModal(false);
+    } catch (error) {
+      console.error('Erro ao cadastrar fornecedor:', error);
+      alert('Erro ao cadastrar fornecedor');
+    }
+  };
+
+  const resetSupplierForm = () => {
+    setSupplierFormData({
+      name: '',
+      contact: '',
+      email: '',
+      phone: '',
+      address: '',
+      cnpj: '',
+      notes: ''
+    });
+  };
+
   // Carregar despesas do Firebase
   useEffect(() => {
     loadDespesas();
+  }, []);
+
+  // Carregar fornecedores
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      try {
+        const suppliersData = await supplierService.getSuppliers();
+        setSuppliers(suppliersData);
+      } catch (error) {
+        console.error('Erro ao carregar fornecedores:', error);
+      }
+    };
+
+    loadSuppliers();
   }, []);
 
   const loadDespesas = async () => {
@@ -409,7 +470,7 @@ export default function AdminDespesasPage() {
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-orange-600 transition duration-200 flex items-center gap-2"
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center gap-2"
           >
             <Plus size={18} />
             Nova Despesa
@@ -721,13 +782,28 @@ export default function AdminDespesasPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Fornecedor/Credor</label>
-                  <input
-                    type="text"
-                    value={formData.fornecedor}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fornecedor: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="Ex: Empresa de energia"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      value={formData.fornecedor}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fornecedor: e.target.value }))}
+                    >
+                      <option value="">Selecione um fornecedor</option>
+                      {suppliers.map(supplier => (
+                        <option key={supplier.id} value={supplier.name}>
+                          {supplier.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowSupplierModal(true)}
+                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:from-red-700 hover:to-orange-600 transition duration-200 flex items-center gap-1"
+                      title="Cadastrar novo fornecedor"
+                    >
+                      <UserPlus size={16} />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Valor (R$)</label>
@@ -828,7 +904,7 @@ export default function AdminDespesasPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   {editingDespesa ? 'Atualizar' : 'Cadastrar'}
                 </button>
@@ -915,6 +991,128 @@ export default function AdminDespesasPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Cadastro de Fornecedor */}
+      {showSupplierModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto mx-4">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">
+                Cadastrar Novo Fornecedor
+              </h2>
+              
+              <form onSubmit={handleSubmitSupplier} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome do Fornecedor *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={supplierFormData.name}
+                    onChange={(e) => setSupplierFormData({ ...supplierFormData, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Pessoa de Contato
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={supplierFormData.contact}
+                    onChange={(e) => setSupplierFormData({ ...supplierFormData, contact: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      value={supplierFormData.email}
+                      onChange={(e) => setSupplierFormData({ ...supplierFormData, email: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      value={supplierFormData.phone}
+                      onChange={(e) => setSupplierFormData({ ...supplierFormData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={supplierFormData.cnpj}
+                    onChange={(e) => setSupplierFormData({ ...supplierFormData, cnpj: e.target.value })}
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Endereço
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={supplierFormData.address}
+                    onChange={(e) => setSupplierFormData({ ...supplierFormData, address: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Observações
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={supplierFormData.notes}
+                    onChange={(e) => setSupplierFormData({ ...supplierFormData, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:from-red-700 hover:to-orange-600 transition duration-200"
+                  >
+                    Cadastrar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSupplierModal(false);
+                      resetSupplierForm();
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
