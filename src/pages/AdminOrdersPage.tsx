@@ -94,47 +94,114 @@ export function AdminOrdersPage() {
 
     // Filtro por data
     if (filters.dateRange !== 'all') {
-      const now = new Date();
-      const filterDate = new Date();
-
       switch (filters.dateRange) {
         case 'today':
-          filterDate.setHours(0, 0, 0, 0);
+          // Criar data de hoje usando construtor local (evita problemas de timezone)
+          const today = new Date();
+          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+          
+          // Criar data de amanhã no início do dia para comparação
+          const tomorrowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0, 0);
+          
+          console.log('🗓️ Filtro "Hoje" aplicado:');
+          console.log('📅 Início de hoje (local):', todayStart.toLocaleString('pt-BR'));
+          console.log('📅 Início de amanhã (local):', tomorrowStart.toLocaleString('pt-BR'));
+          console.log('📅 Início de hoje (ISO):', todayStart.toISOString());
+          console.log('📅 Início de amanhã (ISO):', tomorrowStart.toISOString());
+          
           filtered = filtered.filter(order => {
-            const deliveryDate = new Date(order.deliveryDate);
-            deliveryDate.setHours(0, 0, 0, 0);
-            return deliveryDate.getTime() === filterDate.getTime();
+            // Usar deliveryDateTime se disponível, senão usar deliveryDate, senão usar createdAt
+            let orderDate: Date;
+            
+            if (order.deliveryDateTime) {
+              orderDate = new Date(order.deliveryDateTime);
+            } else if (order.deliveryDate) {
+              // Se deliveryDate é só uma data (YYYY-MM-DD), criar data local sem timezone
+              const dateParts = order.deliveryDate.split('-');
+              orderDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0, 0);
+            } else {
+              orderDate = new Date(order.createdAt);
+            }
+            
+            const isToday = orderDate >= todayStart && orderDate < tomorrowStart;
+            
+            if (isToday) {
+              console.log(`✅ Pedido ${order.id.slice(-8)} incluído - Data: ${orderDate.toLocaleString('pt-BR')} (${orderDate.toISOString()})`);
+            } else {
+              console.log(`❌ Pedido ${order.id.slice(-8)} FORA do hoje - Data: ${orderDate.toLocaleString('pt-BR')} (${orderDate.toISOString()})`);
+            }
+            
+            // Verificar se a data do pedido está entre hoje 00:00 e amanhã 00:00 (exclusivo)
+            return isToday;
           });
+          
+          console.log(`📊 Total de pedidos de hoje: ${filtered.length}`);
           break;
         case 'upcoming':
           // Mostrar apenas pedidos agendados para os próximos 7 dias
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const nextWeek = new Date(today);
-          nextWeek.setDate(nextWeek.getDate() + 7);
+          const todayUpcoming = new Date();
+          const todayUpcomingStart = new Date(todayUpcoming.getFullYear(), todayUpcoming.getMonth(), todayUpcoming.getDate(), 0, 0, 0, 0);
+          const nextWeek = new Date(todayUpcoming.getFullYear(), todayUpcoming.getMonth(), todayUpcoming.getDate() + 7, 23, 59, 59, 999);
           
           filtered = filtered.filter(order => {
             // Apenas pedidos agendados nos próximos dias
             if (order.deliveryType === 'scheduled') {
-              const deliveryDate = new Date(order.deliveryDate);
-              deliveryDate.setHours(0, 0, 0, 0);
-              return deliveryDate.getTime() > today.getTime() && deliveryDate.getTime() <= nextWeek.getTime();
+              let deliveryDate: Date;
+              
+              if (order.deliveryDateTime) {
+                deliveryDate = new Date(order.deliveryDateTime);
+              } else if (order.deliveryDate) {
+                const dateParts = order.deliveryDate.split('-');
+                deliveryDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0, 0);
+              } else {
+                deliveryDate = new Date(order.createdAt);
+              }
+              
+              return deliveryDate > todayUpcomingStart && deliveryDate <= nextWeek;
             }
             return false; // Não mostrar pedidos não agendados neste filtro
           });
           break;
         case 'week':
-          filterDate.setDate(now.getDate() - 7);
+          // Últimos 7 dias (incluindo hoje) usando datas locais
+          const todayWeek = new Date();
+          const weekStart = new Date(todayWeek.getFullYear(), todayWeek.getMonth(), todayWeek.getDate() - 7, 0, 0, 0, 0);
+          const weekEnd = new Date(todayWeek.getFullYear(), todayWeek.getMonth(), todayWeek.getDate(), 23, 59, 59, 999);
+          
           filtered = filtered.filter(order => {
-            const deliveryDate = new Date(order.deliveryDate);
-            return deliveryDate >= filterDate && deliveryDate <= now;
+            let deliveryDate: Date;
+            
+            if (order.deliveryDateTime) {
+              deliveryDate = new Date(order.deliveryDateTime);
+            } else if (order.deliveryDate) {
+              const dateParts = order.deliveryDate.split('-');
+              deliveryDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0, 0);
+            } else {
+              deliveryDate = new Date(order.createdAt);
+            }
+            
+            return deliveryDate >= weekStart && deliveryDate <= weekEnd;
           });
           break;
         case 'month':
-          filterDate.setMonth(now.getMonth() - 1);
+          // Últimos 30 dias (incluindo hoje) usando datas locais
+          const todayMonth = new Date();
+          const monthStart = new Date(todayMonth.getFullYear(), todayMonth.getMonth(), todayMonth.getDate() - 30, 0, 0, 0, 0);
+          const monthEnd = new Date(todayMonth.getFullYear(), todayMonth.getMonth(), todayMonth.getDate(), 23, 59, 59, 999);
+          
           filtered = filtered.filter(order => {
-            const deliveryDate = new Date(order.deliveryDate);
-            return deliveryDate >= filterDate && deliveryDate <= now;
+            let deliveryDate: Date;
+            
+            if (order.deliveryDateTime) {
+              deliveryDate = new Date(order.deliveryDateTime);
+            } else if (order.deliveryDate) {
+              const dateParts = order.deliveryDate.split('-');
+              deliveryDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0, 0);
+            } else {
+              deliveryDate = new Date(order.createdAt);
+            }
+            
+            return deliveryDate >= monthStart && deliveryDate <= monthEnd;
           });
           break;
       }
