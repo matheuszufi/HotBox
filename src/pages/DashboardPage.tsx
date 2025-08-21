@@ -486,7 +486,7 @@ function AdminDashboard() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>2 Itens Mais Pedidos</CardTitle>
+            <CardTitle>Itens Mais Pedidos</CardTitle>
           </CardHeader>
           <CardContent>
             <TopItemsStats />
@@ -495,7 +495,7 @@ function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 Clientes que Mais Compraram</CardTitle>
+            <CardTitle>Clientes que Mais Compraram</CardTitle>
           </CardHeader>
           <CardContent>
             <TopCustomersStats />
@@ -670,7 +670,7 @@ function TopItemsStats() {
             <div key={item.name} className="space-y-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-600 text-sm font-bold">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold">
                     {index + 1}
                   </div>
                   <span className="font-medium text-gray-900">{item.name}</span>
@@ -686,7 +686,7 @@ function TopItemsStats() {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500"
+                  className="h-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-full transition-all duration-500"
                   style={{ width: `${item.percentage}%` }}
                 ></div>
               </div>
