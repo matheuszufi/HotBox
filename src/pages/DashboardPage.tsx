@@ -264,6 +264,65 @@ function CustomerDashboard() {
 function AdminDashboard() {
   const navigate = useNavigate();
   const { unreadChats, hasUnreadMessages } = useChatNotifications();
+  const [adminStats, setAdminStats] = useState({
+    ordersToday: 0,
+    pendingOrders: 0,
+    totalRevenue: 0,
+    totalCustomers: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAdminStats = async () => {
+      try {
+        setLoading(true);
+        const allOrders = await orderService.getAllOrders();
+        
+        // Calcular pedidos de hoje
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const ordersToday = allOrders.filter(order => {
+          const orderDate = new Date(order.createdAt);
+          return orderDate >= today && orderDate < tomorrow;
+        }).length;
+        
+        // Calcular pedidos pendentes
+        const pendingOrders = allOrders.filter(order => 
+          order.status === 'pending' || order.status === 'preparing'
+        ).length;
+        
+        // Calcular faturamento total
+        const totalRevenue = allOrders.reduce((sum, order) => sum + order.total, 0);
+        
+        // Calcular total de clientes únicos
+        const uniqueCustomers = new Set(allOrders.map(order => order.userId));
+        const totalCustomers = uniqueCustomers.size;
+        
+        setAdminStats({
+          ordersToday,
+          pendingOrders,
+          totalRevenue,
+          totalCustomers
+        });
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas do admin:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAdminStats();
+  }, []);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
+  };
 
   return (
     <div className="space-y-6">
@@ -279,10 +338,12 @@ function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pedidos Hoje</p>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : adminStats.ordersToday}
+                </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Package className="text-blue-600" size={20} />
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm">
+                <Package className="text-gray-700" size={20} />
               </div>
             </div>
           </CardContent>
@@ -293,10 +354,12 @@ function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : adminStats.pendingOrders}
+                </p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <Clock className="text-yellow-600" size={20} />
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm">
+                <Clock className="text-gray-700" size={20} />
               </div>
             </div>
           </CardContent>
@@ -307,10 +370,12 @@ function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Faturamento</p>
-                <p className="text-2xl font-bold">R$ 0</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : formatPrice(adminStats.totalRevenue)}
+                </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <TrendingUp className="text-green-600" size={20} />
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm">
+                <TrendingUp className="text-gray-700" size={20} />
               </div>
             </div>
           </CardContent>
@@ -321,10 +386,12 @@ function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Clientes</p>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : adminStats.totalCustomers}
+                </p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Users className="text-purple-600" size={20} />
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm">
+                <Users className="text-gray-700" size={20} />
               </div>
             </div>
           </CardContent>
@@ -337,8 +404,8 @@ function AdminDashboard() {
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
             <CardContent className="pt-6 h-full flex items-center">
               <div className="flex items-center space-x-4 w-full">
-                <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
-                  <Package className="text-primary-600" size={24} />
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm flex-shrink-0">
+                  <Package className="text-gray-700" size={24} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Gerenciar Pedidos</h3>
@@ -353,8 +420,8 @@ function AdminDashboard() {
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
             <CardContent className="pt-6 h-full flex items-center">
               <div className="flex items-center space-x-4 w-full">
-                <div className="p-3 bg-blue-100 rounded-full flex-shrink-0">
-                  <Package className="text-blue-600" size={24} />
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm flex-shrink-0">
+                  <Package className="text-gray-700" size={24} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Controle de Estoque</h3>
@@ -402,8 +469,8 @@ function AdminDashboard() {
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
             <CardContent className="pt-6 h-full flex items-center">
               <div className="flex items-center space-x-4 w-full">
-                <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
-                  <User className="text-green-600" size={24} />
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-full shadow-sm flex-shrink-0">
+                  <User className="text-gray-700" size={24} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Meu Perfil</h3>
