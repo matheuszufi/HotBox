@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Minus, Package, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { useCart } from '../contexts';
 import { Button, Card, CardContent, Input, CartSidebar } from '../components';
+import CustomerChat from '../components/CustomerChat';
 import { useProducts } from '../hooks';
 import type { MenuItem } from '../types';
 
@@ -229,6 +230,9 @@ export function MenuPage() {
 
       {/* Cart Section - Right Side (Fixed) */}
       <CartSidebar className="cart-sidebar" />
+      
+      {/* Customer Chat */}
+      <CustomerChat />
     </div>
   );
 }

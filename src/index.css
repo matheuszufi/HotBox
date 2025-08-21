@@ -21,6 +21,50 @@
     overflow: hidden;
   }
 
+  /* Chat messages área calculada para maximizar uso da tela */
+  .chat-messages-area {
+    /* Cálculo: 100vh - 140px (container) - 24px (padding interno) - 130px (área input + avisos) = calc(100vh - 294px) */
+    min-height: calc(100vh - 294px);
+    max-height: calc(100vh - 294px);
+  }
+
+  /* Design elegante para mensagens */
+  .message-customer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
+    border-radius: 18px 18px 4px 18px;
+  }
+
+  .message-admin {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.25);
+    border-radius: 18px 18px 18px 4px;
+  }
+
+  .message-other {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    box-shadow: 0 2px 8px rgba(252, 182, 159, 0.3);
+    border-radius: 18px;
+    border: 1px solid rgba(252, 182, 159, 0.2);
+  }
+
+  .chat-container {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .send-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .send-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
   /* Ensure cart sidebar is properly sized on mobile */
   @media (max-width: 768px) {
     .cart-sidebar {

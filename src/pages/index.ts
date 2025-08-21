@@ -13,5 +13,8 @@ export { default as AdminFinancePage } from './AdminFinancePage';
 export { default as AdminDREPage } from './AdminDREPage';
 export { default as AdminFluxoCaixaPage } from './AdminFluxoCaixaPage';
 export { default as AdminBalancoPatrimonialPage } from './AdminBalancoPatrimonialPage';
+export { default as AdminIndicadoresPage } from './AdminIndicadoresPage';
 export { default as AdminDespesasPage } from './AdminDespesasPage';
 export { default as AdminManagePage } from './AdminManagePage';
+export { default as AdminChatPage } from './AdminChatPage';
+export { default as CustomerChatPage } from './CustomerChatPage';

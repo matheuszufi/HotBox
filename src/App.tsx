@@ -18,9 +18,12 @@ import {
   AdminDREPage,
   AdminFluxoCaixaPage,
   AdminBalancoPatrimonialPage,
+  AdminIndicadoresPage,
   AdminDespesasPage,
   AdminManagePage
 } from './pages';
+import CustomerChatPageV2 from './pages/CustomerChatPageV2';
+import AdminChatPageV2 from './pages/AdminChatPageV2';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -113,6 +116,15 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <CustomerChatPageV2 />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Admin only routes */}
               <Route 
@@ -193,12 +205,32 @@ function App() {
               />
               
               <Route 
+                path="/admin/indicadores" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Layout>
+                      <AdminIndicadoresPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
                 path="/admin/manage" 
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Layout>
                       <AdminManagePage />
                     </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/admin/chat" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminChatPageV2 />
                   </ProtectedRoute>
                 } 
               />

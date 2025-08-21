@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Settings,
   Users,
@@ -14,7 +15,8 @@ import {
   UserCheck,
   Eye,
   X,
-  TrendingUp
+  TrendingUp,
+  MessageSquare
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { supplierService } from '../services/supplierService';
@@ -27,6 +29,7 @@ import type { Supplier } from '../types/stock';
 import type { Order, User, MenuItem } from '../types';
 
 export default function AdminManagePage() {
+  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -456,6 +459,13 @@ export default function AdminManagePage() {
         >
           <Database className="inline-block w-4 h-4 mr-2" />
           Banco de Dados
+        </button>
+        <button
+          onClick={() => navigate('/admin/chat')}
+          className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+        >
+          <MessageSquare className="inline-block w-4 h-4 mr-2" />
+          Chat Suporte
         </button>
       </div>
 
