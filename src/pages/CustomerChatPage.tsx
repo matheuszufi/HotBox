@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, MessageCircle, Clock, CheckCircle } from 'lucide-react';
+import { Send, ArrowLeft, MessageCircle, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { Chat, ChatMessage } from '../types/chat';
@@ -25,6 +25,13 @@ const CustomerChatPage: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
+    console.log('=== CUSTOMER CHAT DEBUG ===');
+    console.log('User:', user);
+    console.log('User ID:', user?.uid);
+    console.log('User Email:', user?.email);
+    console.log('User Name:', user?.name);
+    console.log('========================');
+    
     if (!user?.uid) {
       setError('Usuário não autenticado');
       setLoading(false);
@@ -64,19 +71,23 @@ const CustomerChatPage: React.FC = () => {
         // Inscrever-se nos chats do cliente
         const unsubscribeChat = chatService.subscribeToCustomerChats(user.uid, (customerChats: Chat[]) => {
           clearTimeout(timeoutId);
+          console.log('Chats do cliente recebidos:', customerChats);
           
           if (customerChats.length > 0) {
             const activeChat = customerChats.find(c => c.status !== 'closed') || customerChats[0];
+            console.log('Chat ativo selecionado:', activeChat);
             setChat(activeChat);
             
             // Inscrever-se nas mensagens deste chat
             const unsubscribeMessages = chatService.subscribeToChatMessages(activeChat.id, (chatMessages: ChatMessage[]) => {
+              console.log('Mensagens do chat recebidas:', chatMessages);
               setMessages(chatMessages);
               setLoading(false);
             });
 
             return () => unsubscribeMessages();
           } else {
+            console.log('Nenhum chat encontrado, usuário pode criar um novo');
             setChat(null);
             setMessages([]);
             setLoading(false);
@@ -98,33 +109,43 @@ const CustomerChatPage: React.FC = () => {
   }, [user?.uid]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user?.uid || sending) return;
+    if (!newMessage.trim() || !user?.uid || sending) {
+      console.log('Mensagem bloqueada:', { newMessage: newMessage.trim(), userId: user?.uid, sending });
+      return;
+    }
 
+    console.log('Iniciando envio de mensagem...', { userId: user.uid, message: newMessage.trim() });
     setSending(true);
+    
     try {
       let chatId = chat?.id;
 
       // Se não existe chat, criar um novo
       if (!chatId) {
+        console.log('Criando novo chat...');
         chatId = await chatService.getOrCreateCustomerChat({
           id: user.uid,
-          name: user.email || 'Cliente',
+          name: user.name || user.email || 'Cliente',
           email: user.email || ''
         });
+        console.log('Chat criado/encontrado:', chatId);
       }
 
       // Enviar mensagem
+      console.log('Enviando mensagem...', { chatId, message: newMessage.trim() });
       await chatService.sendMessage(
         chatId, 
         user.uid, 
-        user.email || 'Cliente', 
+        user.name || user.email || 'Cliente', 
         'customer',
         newMessage.trim()
       );
 
+      console.log('Mensagem enviada com sucesso!');
       setNewMessage('');
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
+      alert('Erro ao enviar mensagem. Tente novamente.');
     } finally {
       setSending(false);
     }
@@ -144,24 +165,11 @@ const CustomerChatPage: React.FC = () => {
     });
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'open':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'in_progress':
-        return <MessageCircle className="w-4 h-4 text-blue-500" />;
-      case 'closed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'open':
+      case 'waiting':
         return 'Aguardando resposta';
-      case 'in_progress':
+      case 'active':
         return 'Em atendimento';
       case 'closed':
         return 'Conversa finalizada';
@@ -176,7 +184,6 @@ const CustomerChatPage: React.FC = () => {
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
           <span className="text-gray-600">Carregando chat...</span>
-          <p className="text-sm text-gray-500">Conectando com o Firebase...</p>
         </div>
       </div>
     );
@@ -213,122 +220,191 @@ const CustomerChatPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Chat com Suporte</h1>
-                <div className="flex items-center space-x-2 mt-1">
-                  {chat && getStatusIcon(chat.status)}
-                  <span className="text-sm text-gray-600">
-                    {chat ? getStatusText(chat.status) : 'Inicie uma conversa'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              <span className="text-sm text-gray-600">Online</span>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Chat com Suporte</h1>
+              <p className="text-gray-600">Converse com nossa equipe de atendimento</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chat Container */}
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-200px)] flex flex-col">
+      <div className="max-w-7xl mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
-          {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4">
-            {messages.length === 0 ? (
-              <div className="text-center py-12">
-                <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Bem-vindo ao suporte HotBox!
+          {/* Info do Cliente */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3">
+                  {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'C'}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  {user?.name || 'Cliente'}
                 </h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  Esta é sua conversa com nossa equipe de suporte. 
-                  Envie uma mensagem para começar o atendimento.
-                </p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.senderRole === 'customer' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.senderRole === 'customer'
-                        ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <div className="text-sm font-medium mb-1">
-                      {message.senderRole === 'customer' ? 'Você' : 'Suporte HotBox'}
-                    </div>
-                    <p className="text-sm">{message.message}</p>
-                    <div className="text-xs mt-1 opacity-75">
-                      {formatTime(message.timestamp)}
-                    </div>
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 mb-4">
+                  <Mail className="w-4 h-4" />
+                  <span>{user?.email || 'cliente@hotbox.com'}</span>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-blue-800 font-medium">
+                      {chat ? getStatusText(chat.status) : 'Pronto para conversar'}
+                    </span>
                   </div>
                 </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Sobre o Atendimento</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Tempo médio de resposta: 5 minutos</li>
+                    <li>• Disponível 24/7</li>
+                    <li>• Suporte em português</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Dicas</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Seja claro e específico</li>
+                    <li>• Informe número do pedido se aplicável</li>
+                    <li>• Descreva o problema detalhadamente</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Message Input */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex space-x-3">
-              <div className="flex-1">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder={
-                    chat?.status === 'closed' 
-                      ? 'Esta conversa foi finalizada' 
-                      : 'Digite sua mensagem...'
-                  }
-                  disabled={chat?.status === 'closed' || sending}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  rows={2}
-                />
+          {/* Área de Conversa */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-200px)] flex flex-col">
+              {/* Header da Conversa */}
+              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                    HB
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Equipe HotBox</h2>
+                    <p className="text-sm text-gray-600">Suporte ao Cliente</p>
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim() || chat?.status === 'closed' || sending}
-                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {sending ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+
+              {/* Mensagens */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Bem-vindo ao suporte HotBox!
+                    </h3>
+                    <p className="text-gray-600 max-w-md mx-auto">
+                      Esta é sua conversa com nossa equipe de suporte. 
+                      Envie uma mensagem para começar o atendimento.
+                    </p>
+                  </div>
                 ) : (
-                  <Send className="w-5 h-5" />
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.senderRole === 'customer' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                          message.senderRole === 'customer'
+                            ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white'
+                            : message.senderRole === 'admin'
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        <div className="text-sm font-medium mb-1">
+                          {message.senderRole === 'customer' ? 'Você' : 
+                           message.senderRole === 'admin' ? 'Equipe HotBox' : 
+                           'Sistema'}
+                        </div>
+                        <p className="text-sm">{message.message}</p>
+                        <div className="text-xs mt-1 opacity-75">
+                          {formatTime(message.timestamp)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
-              </button>
-            </div>
-            
-            {chat?.status === 'closed' && (
-              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  Esta conversa foi finalizada. Para iniciar um novo atendimento, 
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="text-yellow-900 font-medium underline ml-1"
-                  >
-                    clique aqui
-                  </button>
-                  .
-                </p>
+                {sending && (
+                  <div className="flex justify-end">
+                    <div className="bg-gradient-to-r from-red-400 to-orange-400 text-white max-w-xs lg:max-w-md px-4 py-2 rounded-lg opacity-60">
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-pulse flex space-x-1">
+                          <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-sm">Enviando...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            )}
+
+              {/* Campo de Mensagem */}
+              {chat?.status !== 'closed' && (
+                <div className="p-4 border-t border-gray-200">
+                  <div className="flex space-x-3">
+                    <div className="flex-1">
+                      <textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Digite sua mensagem..."
+                        disabled={sending}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        rows={2}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || sending}
+                      className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {sending ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {chat?.status === 'closed' && (
+                <div className="p-4 border-t border-gray-200">
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      Esta conversa foi finalizada. Para iniciar um novo atendimento, 
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="text-yellow-900 font-medium underline ml-1"
+                      >
+                        clique aqui
+                      </button>
+                      .
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

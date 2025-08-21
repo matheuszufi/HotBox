@@ -3,7 +3,6 @@ import {
   addDoc, 
   query, 
   where, 
-  orderBy, 
   onSnapshot, 
   updateDoc, 
   doc, 
@@ -64,22 +63,23 @@ class ChatService {
     attachmentUrl?: string
   ): Promise<void> {
     try {
-      const newMessage: Omit<ChatMessage, 'id'> = {
+      const newMessage: any = {
         chatId,
         senderId,
         senderName,
         senderRole,
         message,
-        timestamp: new Date().toISOString(),
+        timestamp: serverTimestamp(),
         read: false,
-        type,
-        attachmentUrl
+        type
       };
 
-      await addDoc(this.messagesCollection, {
-        ...newMessage,
-        timestamp: serverTimestamp()
-      });
+      // Só adicionar attachmentUrl se não for undefined
+      if (attachmentUrl) {
+        newMessage.attachmentUrl = attachmentUrl;
+      }
+
+      await addDoc(this.messagesCollection, newMessage);
 
       // Atualizar chat com última mensagem
       await updateDoc(doc(this.chatsCollection, chatId), {
@@ -99,21 +99,18 @@ class ChatService {
   // Enviar mensagem do sistema
   async sendSystemMessage(chatId: string, message: string): Promise<void> {
     try {
-      const systemMessage: Omit<ChatMessage, 'id'> = {
+      const systemMessage = {
         chatId,
         senderId: 'system',
         senderName: 'Equipe HotBox',
         senderRole: 'admin',
         message,
-        timestamp: new Date().toISOString(),
+        timestamp: serverTimestamp(),
         read: false,
         type: 'system'
       };
 
-      await addDoc(this.messagesCollection, {
-        ...systemMessage,
-        timestamp: serverTimestamp()
-      });
+      await addDoc(this.messagesCollection, systemMessage);
 
     } catch (error) {
       console.error('Erro ao enviar mensagem do sistema:', error);
@@ -128,8 +125,7 @@ class ChatService {
       const q = query(
         this.chatsCollection,
         where('customerId', '==', customerData.id),
-        where('status', 'in', ['active', 'waiting']),
-        orderBy('updatedAt', 'desc')
+        where('status', 'in', ['active', 'waiting'])
       );
 
       const querySnapshot = await getDocs(q);
@@ -150,10 +146,8 @@ class ChatService {
 
   // Listar todos os chats (para admin)
   subscribeToChats(callback: (chats: Chat[]) => void): () => void {
-    const q = query(
-      this.chatsCollection,
-      orderBy('updatedAt', 'desc')
-    );
+    // Query simples sem orderBy para evitar índices
+    const q = query(this.chatsCollection);
 
     return onSnapshot(q, (querySnapshot) => {
       const chats: Chat[] = querySnapshot.docs.map(doc => {
@@ -166,6 +160,14 @@ class ChatService {
           lastMessageTime: data.lastMessageTime instanceof Timestamp ? data.lastMessageTime.toDate().toISOString() : data.lastMessageTime
         } as Chat;
       });
+      
+      // Ordenar no cliente para evitar índices
+      chats.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+        return dateB - dateA; // Mais recentes primeiro
+      });
+      
       callback(chats);
     });
   }
@@ -174,8 +176,7 @@ class ChatService {
   subscribeToCustomerChats(customerId: string, callback: (chats: Chat[]) => void): () => void {
     const q = query(
       this.chatsCollection,
-      where('customerId', '==', customerId),
-      orderBy('updatedAt', 'desc')
+      where('customerId', '==', customerId)
     );
 
     return onSnapshot(q, (querySnapshot) => {
@@ -189,6 +190,14 @@ class ChatService {
           lastMessageTime: data.lastMessageTime instanceof Timestamp ? data.lastMessageTime.toDate().toISOString() : data.lastMessageTime
         } as Chat;
       });
+      
+      // Ordenar no cliente para evitar índices
+      chats.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+        return dateB - dateA; // Mais recentes primeiro
+      });
+      
       callback(chats);
     });
   }
@@ -197,19 +206,39 @@ class ChatService {
   subscribeToChatMessages(chatId: string, callback: (messages: ChatMessage[]) => void): () => void {
     const q = query(
       this.messagesCollection,
-      where('chatId', '==', chatId),
-      orderBy('timestamp', 'asc')
+      where('chatId', '==', chatId)
     );
 
     return onSnapshot(q, (querySnapshot) => {
       const messages: ChatMessage[] = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        return {
+        const message: ChatMessage = {
           id: doc.id,
-          ...data,
-          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate().toISOString() : data.timestamp
-        } as ChatMessage;
+          chatId: data.chatId,
+          senderId: data.senderId,
+          senderName: data.senderName,
+          senderRole: data.senderRole,
+          message: data.message,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate().toISOString() : data.timestamp || new Date().toISOString(),
+          read: data.read || false,
+          type: data.type || 'text'
+        };
+        
+        // Só adicionar attachmentUrl se existir
+        if (data.attachmentUrl) {
+          message.attachmentUrl = data.attachmentUrl;
+        }
+        
+        return message;
       });
+      
+      // Ordenar no cliente para evitar índices
+      messages.sort((a, b) => {
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        return dateA - dateB; // Mais antigas primeiro
+      });
+      
       callback(messages);
     });
   }
@@ -280,7 +309,7 @@ class ChatService {
   async testConnection(): Promise<boolean> {
     try {
       // Tentar uma operação simples no Firestore
-      const testQuery = query(this.chatsCollection, orderBy('createdAt', 'desc'));
+      const testQuery = query(this.chatsCollection);
       await getDocs(testQuery);
       return true;
     } catch (error) {

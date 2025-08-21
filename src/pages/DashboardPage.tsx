@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Clock, Package, TrendingUp, Users, DollarSign, CalendarDays, User, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Clock, Package, TrendingUp, Users, DollarSign, CalendarDays, User, MessageCircle, Bell } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { orderService } from '../services/orderService';
+import { useChatNotifications } from '../hooks';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export function DashboardPage() {
 function CustomerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { unreadChats, hasUnreadMessages } = useChatNotifications();
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalSpent: 0,
@@ -246,6 +248,11 @@ function CustomerDashboard() {
             >
               <MessageCircle className="w-6 h-6" />
               <span className="font-medium">Chat Online</span>
+              {hasUnreadMessages && (
+                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+                  {unreadChats > 9 ? '9+' : unreadChats}
+                </div>
+              )}
             </button>
           </div>
         </div>
@@ -255,6 +262,9 @@ function CustomerDashboard() {
 }
 
 function AdminDashboard() {
+  const navigate = useNavigate();
+  const { unreadChats, hasUnreadMessages } = useChatNotifications();
+
   return (
     <div className="space-y-6">
       <div>
@@ -322,7 +332,7 @@ function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-4 gap-6">
         <Link to="/admin/orders">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="pt-6">
@@ -354,6 +364,39 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+
+        <div className="relative">
+          <button
+            onClick={() => navigate('/admin/chat')}
+            className="w-full h-full text-left"
+          >
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-red-100 rounded-full relative">
+                    <MessageCircle className="text-red-600" size={24} />
+                    {hasUnreadMessages && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                        {unreadChats > 9 ? '9+' : unreadChats}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      Central de Atendimento
+                      {hasUnreadMessages && (
+                        <span className="ml-2 text-red-600 text-sm font-normal">
+                          ({unreadChats} nova{unreadChats !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-gray-600">Atender clientes via chat</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
+        </div>
 
         <Link to="/profile">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
