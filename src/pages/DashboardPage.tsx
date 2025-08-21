@@ -334,15 +334,15 @@ function AdminDashboard() {
       {/* Quick Actions */}
       <div className="grid md:grid-cols-4 gap-6">
         <Link to="/admin/orders">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-primary-100 rounded-full">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
+            <CardContent className="pt-6 h-full flex items-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
                   <Package className="text-primary-600" size={24} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Gerenciar Pedidos</h3>
-                  <p className="text-gray-600">Ver e atualizar status dos pedidos</p>
+                  <p className="text-gray-600 text-sm">Ver e atualizar status dos pedidos</p>
                 </div>
               </div>
             </CardContent>
@@ -350,15 +350,15 @@ function AdminDashboard() {
         </Link>
 
         <Link to="/admin/stock">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-full">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
+            <CardContent className="pt-6 h-full flex items-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="p-3 bg-blue-100 rounded-full flex-shrink-0">
                   <Package className="text-blue-600" size={24} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Controle de Estoque</h3>
-                  <p className="text-gray-600">Gerenciar inventário dos itens</p>
+                  <p className="text-gray-600 text-sm">Gerenciar inventário dos itens</p>
                 </div>
               </div>
             </CardContent>
@@ -370,10 +370,10 @@ function AdminDashboard() {
             onClick={() => navigate('/admin/chat')}
             className="w-full h-full text-left"
           >
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-red-100 rounded-full relative">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
+              <CardContent className="pt-6 h-full flex items-center">
+                <div className="flex items-center space-x-4 w-full">
+                  <div className="p-3 bg-red-100 rounded-full relative flex-shrink-0">
                     <MessageCircle className="text-red-600" size={24} />
                     {hasUnreadMessages && (
                       <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
@@ -381,7 +381,7 @@ function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-lg">
                       Central de Atendimento
                       {hasUnreadMessages && (
@@ -390,7 +390,7 @@ function AdminDashboard() {
                         </span>
                       )}
                     </h3>
-                    <p className="text-gray-600">Atender clientes via chat</p>
+                    <p className="text-gray-600 text-sm">Atender clientes via chat</p>
                   </div>
                 </div>
               </CardContent>
@@ -399,15 +399,15 @@ function AdminDashboard() {
         </div>
 
         <Link to="/profile">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-full">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-32">
+            <CardContent className="pt-6 h-full flex items-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
                   <User className="text-green-600" size={24} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-lg">Meu Perfil</h3>
-                  <p className="text-gray-600">Editar informações pessoais</p>
+                  <p className="text-gray-600 text-sm">Editar informações pessoais</p>
                 </div>
               </div>
             </CardContent>
