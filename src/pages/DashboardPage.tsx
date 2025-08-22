@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Clock, Package, TrendingUp, Users, DollarSign, CalendarDays, User, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
-import CustomerChat from '../components/CustomerChat';
 import { orderService } from '../services/orderService';
 import { useChatNotifications } from '../hooks';
 
@@ -269,9 +268,6 @@ function CustomerDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Customer Chat */}
-      <CustomerChat />
     </div>
   );
 }
@@ -517,9 +513,6 @@ function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Customer Chat - também disponível para admins */}
-      <CustomerChat />
     </div>
   );
 }

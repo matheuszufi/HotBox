@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Settings,
   Users,
@@ -16,7 +15,7 @@ import {
   Eye,
   X,
   TrendingUp,
-  MessageSquare
+  Tags
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { supplierService } from '../services/supplierService';
@@ -29,11 +28,11 @@ import type { Supplier } from '../types/stock';
 import type { Order, User, MenuItem } from '../types';
 
 export default function AdminManagePage() {
-  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<string[]>(['graos', 'carnes', 'massas', 'legumes', 'acompanhamentos', 'bebidas', 'pratos-prontos']);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('suppliers');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -42,6 +41,9 @@ export default function AdminManagePage() {
   const [editingProduct, setEditingProduct] = useState<MenuItem | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [productFormData, setProductFormData] = useState({
     name: '',
     description: '',
@@ -236,6 +238,39 @@ export default function AdminManagePage() {
     setShowUserModal(true);
   };
 
+  // Category Management Functions
+  const handleAddCategory = () => {
+    if (newCategoryName.trim() && !categories.includes(newCategoryName.trim().toLowerCase())) {
+      setCategories([...categories, newCategoryName.trim().toLowerCase()]);
+      setNewCategoryName('');
+      setShowCategoryModal(false);
+      alert('Categoria adicionada com sucesso!');
+    } else {
+      alert('Nome inválido ou categoria já existe!');
+    }
+  };
+
+  const handleDeleteCategory = (categoryToDelete: string) => {
+    // Verificar se há produtos usando esta categoria
+    const productsUsingCategory = products.filter(product => product.category === categoryToDelete);
+    
+    if (productsUsingCategory.length > 0) {
+      alert(`Não é possível excluir a categoria "${categoryToDelete}" pois existem ${productsUsingCategory.length} produto(s) usando ela.`);
+      return;
+    }
+
+    if (confirm(`Tem certeza que deseja excluir a categoria "${categoryToDelete}"?`)) {
+      setCategories(categories.filter(cat => cat !== categoryToDelete));
+      alert('Categoria excluída com sucesso!');
+    }
+  };
+
+  const formatCategoryName = (category: string) => {
+    return category.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   // Função para obter pedidos do usuário
   const getUserOrders = (userId: string) => {
     return orders.filter(order => order.userId === userId);
@@ -428,6 +463,17 @@ export default function AdminManagePage() {
           Produtos ({products.length})
         </button>
         <button
+          onClick={() => setActiveTab('categories')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'categories'
+              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          <Tags className="inline-block w-4 h-4 mr-2" />
+          Categorias
+        </button>
+        <button
           onClick={() => setActiveTab('orders')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'orders'
@@ -459,13 +505,6 @@ export default function AdminManagePage() {
         >
           <Database className="inline-block w-4 h-4 mr-2" />
           Banco de Dados
-        </button>
-        <button
-          onClick={() => navigate('/admin/chat')}
-          className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
-        >
-          <MessageSquare className="inline-block w-4 h-4 mr-2" />
-          Chat Suporte
         </button>
       </div>
 
@@ -667,6 +706,152 @@ export default function AdminManagePage() {
                 <div className="text-center py-8">
                   <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <p className="text-gray-500">Nenhum produto encontrado</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Categorias de Produtos ({categories.length})
+            </h2>
+            <button
+              onClick={() => setShowCategoryModal(true)}
+              className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-orange-600 transition duration-200 flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Nova Categoria
+            </button>
+          </div>
+
+          <Card>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((category) => {
+                  const productsInCategory = products.filter(product => product.category === category);
+                  const isExpanded = expandedCategory === category;
+                  
+                  return (
+                    <div 
+                      key={category} 
+                      className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <div 
+                        className="p-4 cursor-pointer"
+                        onClick={() => setExpandedCategory(isExpanded ? null : category)}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-gray-900 capitalize">
+                              {formatCategoryName(category)}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {productsInCategory.length} produto(s)
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCategory(category);
+                              }}
+                              className="text-red-600 hover:text-red-800 p-1 rounded"
+                              title="Excluir categoria"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {productsInCategory.length > 0 && !isExpanded && (
+                          <div className="space-y-1">
+                            <div className="text-xs text-gray-500 font-medium mb-1">
+                              Produtos:
+                            </div>
+                            {productsInCategory.map((product) => (
+                              <div key={product.id} className="text-xs text-gray-600 bg-white px-2 py-1 rounded">
+                                {product.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Lista expandida de produtos */}
+                      <div 
+                        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                          isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                        }`}
+                      >
+                        {isExpanded && productsInCategory.length > 0 && (
+                          <div className="px-4 pb-4 border-t border-gray-200">
+                            <div className="mt-3 mb-2">
+                              <h4 className="font-medium text-gray-900 text-sm">
+                                Todos os produtos ({productsInCategory.length})
+                              </h4>
+                            </div>
+                            
+                            <div className="space-y-2 max-h-72 overflow-y-auto">
+                              {productsInCategory.map((product) => (
+                                <div key={product.id} className="flex justify-between items-center p-2 bg-white rounded-md border hover:bg-gray-50 transition-colors">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm text-gray-900 truncate">
+                                      {product.name}
+                                    </div>
+                                    <div className="text-xs text-gray-600 truncate">
+                                      {product.description}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {product.quantity}{product.quantityType}
+                                    </div>
+                                  </div>
+                                  <div className="ml-3 text-right flex-shrink-0">
+                                    <div className="font-semibold text-sm text-green-600">
+                                      R$ {product.price.toFixed(2)}
+                                    </div>
+                                    <div className={`text-xs px-2 py-1 rounded-full ${
+                                      product.available 
+                                        ? 'bg-green-100 text-green-700' 
+                                        : 'bg-red-100 text-red-700'
+                                    }`}>
+                                      {product.available ? 'Disponível' : 'Indisponível'}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            <div className="mt-3 pt-2 border-t border-gray-100 text-center">
+                              <button
+                                onClick={() => setExpandedCategory(null)}
+                                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                ▲ Recolher lista
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {categories.length === 0 && (
+                <div className="text-center py-8">
+                  <Tags className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-500">Nenhuma categoria cadastrada</p>
+                  <button
+                    onClick={() => setShowCategoryModal(true)}
+                    className="mt-4 bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-orange-600 transition duration-200"
+                  >
+                    Criar Primeira Categoria
+                  </button>
                 </div>
               )}
             </CardContent>
@@ -1549,6 +1734,74 @@ export default function AdminManagePage() {
               >
                 Fechar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Categoria */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">Nova Categoria</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome da Categoria *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Ex: Sobremesas, Lanches, etc."
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddCategory();
+                      }
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    O nome será formatado automaticamente (ex: "pratos-especiais")
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleAddCategory}
+                    className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 text-white py-2 px-4 rounded-md hover:from-red-700 hover:to-orange-600 transition duration-200"
+                    disabled={!newCategoryName.trim()}
+                  >
+                    Adicionar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCategoryModal(false);
+                      setNewCategoryName('');
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Categorias Existentes:</h3>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {categories.map((category) => (
+                    <div key={category} className="flex justify-between items-center bg-gray-50 px-3 py-2 rounded text-sm">
+                      <span className="capitalize">{formatCategoryName(category)}</span>
+                      <span className="text-gray-500">
+                        {products.filter(p => p.category === category).length} produtos
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
