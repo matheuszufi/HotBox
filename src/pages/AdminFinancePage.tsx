@@ -88,86 +88,6 @@ export default function AdminFinancePage() {
     return new Date(date).toLocaleDateString('pt-BR');
   };
 
-  // Função para testar filtros de data (apenas para desenvolvimento)
-  const testDateFilters = () => {
-    console.log('🧪 === TESTE DE FILTROS DE DATA ===');
-    console.log('📅 Data inicial selecionada:', startDate);
-    console.log('📅 Data final selecionada:', endDate);
-    
-    // Testar criação de datas
-    const startParts = startDate.split('-');
-    const testStart = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]), 0, 0, 0, 0);
-    
-    const endParts = endDate.split('-');
-    const testEnd = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]), 23, 59, 59, 999);
-    
-    console.log('🕐 Data início criada:', testStart.toLocaleString('pt-BR'));
-    console.log('🕘 Data fim criada:', testEnd.toLocaleString('pt-BR'));
-    
-    // Testar algumas datas exemplo
-    const testDates = [
-      startDate,
-      endDate,
-      '2025-08-20',
-      '2025-08-21',
-      '2025-08-22'
-    ];
-    
-    console.log('📋 Testando datas:');
-    testDates.forEach(dateStr => {
-      const dateParts = dateStr.split('-');
-      const testDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0, 0);
-      const isInRange = testDate >= testStart && testDate <= testEnd;
-      console.log(`  ${dateStr} (${testDate.toLocaleDateString('pt-BR')}): ${isInRange ? '✅ INCLUÍDO' : '❌ FORA'}`);
-    });
-    
-    console.log('🧪 === FIM DO TESTE ===');
-  };
-
-  // Função para definir filtros rápidos
-  const setQuickFilter = (filterType: 'today' | 'yesterday' | 'this-week' | 'this-month') => {
-    const today = new Date();
-    
-    // Função auxiliar para formatar data como YYYY-MM-DD
-    const formatDateLocal = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    
-    switch (filterType) {
-      case 'today':
-        const todayStr = formatDateLocal(today);
-        setStartDate(todayStr);
-        setEndDate(todayStr);
-        break;
-        
-      case 'yesterday':
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = formatDateLocal(yesterday);
-        setStartDate(yesterdayStr);
-        setEndDate(yesterdayStr);
-        break;
-        
-      case 'this-week':
-        // Início da semana (domingo)
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        setStartDate(formatDateLocal(weekStart));
-        setEndDate(formatDateLocal(today));
-        break;
-        
-      case 'this-month':
-        // Primeiro dia do mês
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(formatDateLocal(monthStart));
-        setEndDate(formatDateLocal(today));
-        break;
-    }
-  };
-
   // Função auxiliar para obter a data relevante de um pedido
   const getOrderRelevantDate = (order: Order): Date => {
     if (order.deliveryDateTime) {
@@ -749,42 +669,7 @@ export default function AdminFinancePage() {
           <span className="text-sm font-medium text-gray-700">Período:</span>
         </div>
         
-        {/* Botões de filtro rápido */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <button
-            onClick={() => setQuickFilter('today')}
-            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            Hoje
-          </button>
-          <button
-            onClick={() => setQuickFilter('yesterday')}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Ontem
-          </button>
-          <button
-            onClick={() => setQuickFilter('this-week')}
-            className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-          >
-            Esta Semana
-          </button>
-          <button
-            onClick={() => setQuickFilter('this-month')}
-            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-          >
-            Este Mês
-          </button>
-          {/* Botão de teste para desenvolvimento */}
-          <button
-            onClick={testDateFilters}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-dashed"
-            title="Testar filtros de data (desenvolvimento)"
-          >
-            🧪 Teste
-          </button>
-        </div>
-        
+        {/* Filtros de Data */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-600">Data Inicial:</label>
