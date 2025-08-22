@@ -53,13 +53,14 @@ export default function AdminChatPage() {
       const unsubscribe = chatService.subscribeToChatMessages(activeChat.id, (chatMessages) => {
         setMessages(chatMessages);
         
-        // Marcar mensagens como lidas
+        // Marcar mensagens como lidas pelo admin
         const unreadMessages = chatMessages
           .filter(msg => !msg.read && msg.senderRole === 'customer')
           .map(msg => msg.id);
         
         if (unreadMessages.length > 0) {
-          chatService.markMessagesAsRead(activeChat.id, unreadMessages);
+          console.log('📖 [Admin] Marcando mensagens como lidas:', unreadMessages.length);
+          chatService.markMessagesAsRead(activeChat.id, unreadMessages, 'admin');
         }
       });
 

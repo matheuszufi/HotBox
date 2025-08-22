@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Clock, Package, TrendingUp, Users, DollarSign, CalendarDays, User, MessageCircle, Bell } from 'lucide-react';
+import { ShoppingBag, Clock, Package, TrendingUp, Users, DollarSign, CalendarDays, User, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts';
 import { Card, CardHeader, CardTitle, CardContent } from '../components';
 import { orderService } from '../services/orderService';
@@ -19,7 +19,18 @@ export function DashboardPage() {
 function CustomerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { unreadChats, hasUnreadMessages } = useChatNotifications();
+  const { unreadChats, hasUnreadMessages, loading: chatLoading } = useChatNotifications();
+  
+  // Debug logs para rastrear notificações
+  useEffect(() => {
+    console.log('🏠 [Dashboard] Notificações do chat:', {
+      unreadChats,
+      hasUnreadMessages,
+      chatLoading,
+      userRole: user?.role
+    });
+  }, [unreadChats, hasUnreadMessages, chatLoading, user?.role]);
+  
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalSpent: 0,

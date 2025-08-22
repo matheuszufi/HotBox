@@ -21,7 +21,8 @@ export interface Chat {
   updatedAt: string;
   lastMessage?: string;
   lastMessageTime?: string;
-  unreadCount: number;
+  unreadCount: number; // Mensagens não lidas pelo cliente (enviadas pelo admin)
+  unreadCountForAdmin?: number; // Mensagens não lidas pelo admin (enviadas pelo cliente)
   adminId?: string;
   adminName?: string;
   priority: 'low' | 'medium' | 'high';

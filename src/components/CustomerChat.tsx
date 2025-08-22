@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   MessageCircle, 
   Send, 
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { chatService } from '../services/chatService';
+import { useChatNotifications } from '../hooks/useChatNotifications';
 import type { Chat, ChatMessage } from '../types/chat';
 
 interface CustomerChatProps {
@@ -18,6 +19,7 @@ interface CustomerChatProps {
 
 export default function CustomerChat({}: CustomerChatProps) {
   const { user } = useAuth();
+  const { unreadChats } = useChatNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
@@ -35,12 +37,58 @@ export default function CustomerChat({}: CustomerChatProps) {
     scrollToBottom();
   }, [messages]);
 
-  // Inicializar chat quando abrir
+  // Marcar mensagens como lidas quando o chat for aberto/maximizado
+  useEffect(() => {
+    if (isOpen && !isMinimized && currentChat && messages.length > 0) {
+      const unreadMessages = messages
+        .filter(msg => !msg.read && msg.senderRole === 'admin')
+        .map(msg => msg.id);
+      
+      if (unreadMessages.length > 0) {
+        console.log('📖 [CustomerChat] Chat aberto/maximizado - Marcando mensagens como lidas:', unreadMessages.length);
+        
+        // Usar um timeout para garantir que o usuário realmente veja o chat
+        const markAsReadTimeout = setTimeout(() => {
+          if (isOpen && !isMinimized && currentChat) { // Verificar novamente
+            chatService.markMessagesAsRead(currentChat.id, unreadMessages, 'customer');
+          }
+        }, 1000); // 1 segundo de delay
+
+        return () => clearTimeout(markAsReadTimeout);
+      }
+    }
+  }, [isOpen, isMinimized, currentChat?.id, messages.length]);
+
+  // Ref para throttle
+  const lastMarkAsReadRef = useRef<number>(0);
+
+  // Marcar mensagens como lidas quando o usuário interagir com o chat
+  const handleMarkAsRead = useCallback(() => {
+    if (currentChat && messages.length > 0 && isOpen && !isMinimized) {
+      const now = Date.now();
+      // Throttle: só executar a cada 2 segundos
+      if (now - lastMarkAsReadRef.current > 2000) {
+        lastMarkAsReadRef.current = now;
+        
+        const unreadMessages = messages
+          .filter(msg => !msg.read && msg.senderRole === 'admin')
+          .map(msg => msg.id);
+        
+        if (unreadMessages.length > 0) {
+          console.log('📖 [CustomerChat] Usuário interagiu com chat - Marcando como lidas:', unreadMessages.length);
+          chatService.markMessagesAsRead(currentChat.id, unreadMessages, 'customer');
+        }
+      }
+    }
+  }, [currentChat, messages, isOpen, isMinimized]);
+
+  // Inicializar chat APENAS quando o usuário abrir o chat pela primeira vez
   useEffect(() => {
     if (isOpen && user && !currentChat) {
+      console.log('🔄 [CustomerChat] Inicializando chat porque foi aberto');
       initializeChat();
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, currentChat]);
 
   const initializeChat = async () => {
     if (!user) return;
@@ -63,15 +111,15 @@ export default function CustomerChat({}: CustomerChatProps) {
 
       // Buscar mensagens do chat
       const unsubscribeMessages = chatService.subscribeToChatMessages(chatId, (chatMessages) => {
+        console.log('📨 [CustomerChat] Mensagens recebidas:', chatMessages.length);
         setMessages(chatMessages);
         
-        // Marcar mensagens como lidas
+        // NÃO marcar como lidas automaticamente - isso será feito apenas quando o chat estiver visível
         const unreadMessages = chatMessages
-          .filter(msg => !msg.read && msg.senderRole === 'admin')
-          .map(msg => msg.id);
+          .filter(msg => !msg.read && msg.senderRole === 'admin');
         
         if (unreadMessages.length > 0) {
-          chatService.markMessagesAsRead(chatId, unreadMessages);
+          console.log('� [CustomerChat] Mensagens não lidas encontradas:', unreadMessages.length, '(não marcando como lidas ainda)');
         }
       });
 
@@ -128,8 +176,8 @@ export default function CustomerChat({}: CustomerChatProps) {
     return null;
   };
 
-  // Contador de mensagens não lidas
-  const unreadCount = currentChat?.unreadCount || 0;
+  // Contador de mensagens não lidas - usar o hook global de notificações
+  const totalUnreadCount = unreadChats;
 
   if (!user) return null;
 
@@ -142,9 +190,9 @@ export default function CustomerChat({}: CustomerChatProps) {
           className="bg-gradient-to-r from-red-500 to-orange-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 relative"
         >
           <MessageCircle size={24} />
-          {unreadCount > 0 && (
+          {totalUnreadCount > 0 && (
             <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
             </div>
           )}
         </button>
@@ -187,7 +235,11 @@ export default function CustomerChat({}: CustomerChatProps) {
           {!isMinimized && (
             <>
               {/* Área de Mensagens */}
-              <div className="h-64 overflow-y-auto p-3 space-y-3 bg-gray-50">
+              <div 
+                className="h-64 overflow-y-auto p-3 space-y-3 bg-gray-50"
+                onScroll={handleMarkAsRead}
+                onClick={handleMarkAsRead}
+              >
                 {loading ? (
                   <div className="flex justify-center items-center h-full">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>

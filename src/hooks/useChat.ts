@@ -67,7 +67,8 @@ export const useChat = ({ userId, userName, userEmail, userRole }: UseChatProps)
         status: 'waiting',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        unreadCount: 0,
+        unreadCount: 0, // Mensagens não lidas pelo cliente
+        unreadCountForAdmin: 0, // Mensagens não lidas pelo admin
         priority: 'medium',
         category: 'general'
       };

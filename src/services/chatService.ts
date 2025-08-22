@@ -7,6 +7,7 @@ import {
   updateDoc, 
   doc, 
   getDocs,
+  getDoc,
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
@@ -38,7 +39,8 @@ class ChatService {
         status: 'waiting',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        unreadCount: 0,
+        unreadCount: 0, // Mensagens não lidas pelo cliente
+        unreadCountForAdmin: 0, // Mensagens não lidas pelo admin
         priority: 'medium',
         category: orderId ? 'order' : 'general',
         orderId // Será removido pela função cleanObject se for undefined
@@ -94,14 +96,40 @@ class ChatService {
 
       await addDoc(this.messagesCollection, cleanedMessage);
 
+      // Primeiro, buscar o chat atual para obter os contadores atuais
+      const chatDoc = await getDoc(doc(this.chatsCollection, chatId));
+      const currentChat = chatDoc.data();
+      
       // Atualizar chat com última mensagem
-      await updateDoc(doc(this.chatsCollection, chatId), {
+      const updateData: any = {
         lastMessage: message,
         lastMessageTime: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        status: 'active',
-        unreadCount: senderRole === 'customer' ? 1 : 0
+        status: 'active'
+      };
+
+      // Incrementar contador correto baseado em quem enviou a mensagem
+      if (senderRole === 'customer') {
+        // Cliente enviou: incrementar contador para admin ver, resetar contador do cliente
+        updateData.unreadCountForAdmin = (currentChat?.unreadCountForAdmin || 0) + 1;
+        // Não resetar unreadCount aqui - deixar como estava
+      } else if (senderRole === 'admin') {
+        // Admin enviou: incrementar contador para cliente ver, resetar contador do admin
+        updateData.unreadCount = (currentChat?.unreadCount || 0) + 1;
+        // Não resetar unreadCountForAdmin aqui - deixar como estava
+      }
+
+      console.log('📤 [ChatService] Enviando mensagem:', {
+        chatId: chatId.slice(-8),
+        senderRole,
+        message: message.slice(0, 30) + '...',
+        newUnreadCount: updateData.unreadCount,
+        newUnreadCountForAdmin: updateData.unreadCountForAdmin,
+        previousUnreadCount: currentChat?.unreadCount || 0,
+        previousUnreadCountForAdmin: currentChat?.unreadCountForAdmin || 0
       });
+
+      await updateDoc(doc(this.chatsCollection, chatId), cleanObject(updateData));
 
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
@@ -257,7 +285,7 @@ class ChatService {
   }
 
   // Marcar mensagens como lidas
-  async markMessagesAsRead(chatId: string, messageIds: string[]): Promise<void> {
+  async markMessagesAsRead(chatId: string, messageIds: string[], userRole: 'customer' | 'admin' = 'customer'): Promise<void> {
     try {
       const updatePromises = messageIds.map(messageId =>
         updateDoc(doc(this.messagesCollection, messageId), { read: true })
@@ -265,10 +293,16 @@ class ChatService {
       
       await Promise.all(updatePromises);
 
-      // Resetar contador de mensagens não lidas
-      await updateDoc(doc(this.chatsCollection, chatId), {
-        unreadCount: 0
-      });
+      // Resetar contador de mensagens não lidas baseado no papel do usuário
+      const updateData: any = {};
+      
+      if (userRole === 'customer') {
+        updateData.unreadCount = 0; // Cliente leu as mensagens do admin
+      } else {
+        updateData.unreadCountForAdmin = 0; // Admin leu as mensagens do cliente
+      }
+
+      await updateDoc(doc(this.chatsCollection, chatId), cleanObject(updateData));
 
     } catch (error) {
       console.error('Erro ao marcar mensagens como lidas:', error);
