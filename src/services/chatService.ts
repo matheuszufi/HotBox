@@ -13,6 +13,17 @@ import {
 import { db } from '../config/firebase';
 import type { Chat, ChatMessage } from '../types/chat';
 
+// Função auxiliar para remover campos undefined antes de enviar para o Firestore
+const cleanObject = (obj: any): any => {
+  const cleaned: any = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  });
+  return cleaned;
+};
+
 class ChatService {
   private chatsCollection = collection(db, 'chats');
   private messagesCollection = collection(db, 'messages');
@@ -20,7 +31,7 @@ class ChatService {
   // Criar um novo chat
   async createChat(customerData: { id: string; name: string; email: string }, orderId?: string): Promise<string> {
     try {
-      const newChat: Omit<Chat, 'id'> = {
+      const newChat: any = {
         customerId: customerData.id,
         customerName: customerData.name,
         customerEmail: customerData.email,
@@ -30,14 +41,17 @@ class ChatService {
         unreadCount: 0,
         priority: 'medium',
         category: orderId ? 'order' : 'general',
-        orderId
+        orderId // Será removido pela função cleanObject se for undefined
       };
 
-      const docRef = await addDoc(this.chatsCollection, {
+      // Limpar campos undefined antes de enviar para o Firestore
+      const cleanedChat = cleanObject({
         ...newChat,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+
+      const docRef = await addDoc(this.chatsCollection, cleanedChat);
 
       // Mensagem de boas-vindas automática
       await this.sendSystemMessage(
@@ -71,15 +85,14 @@ class ChatService {
         message,
         timestamp: serverTimestamp(),
         read: false,
-        type
+        type,
+        attachmentUrl // Será removido pela função cleanObject se for undefined
       };
 
-      // Só adicionar attachmentUrl se não for undefined
-      if (attachmentUrl) {
-        newMessage.attachmentUrl = attachmentUrl;
-      }
+      // Limpar campos undefined antes de enviar para o Firestore
+      const cleanedMessage = cleanObject(newMessage);
 
-      await addDoc(this.messagesCollection, newMessage);
+      await addDoc(this.messagesCollection, cleanedMessage);
 
       // Atualizar chat com última mensagem
       await updateDoc(doc(this.chatsCollection, chatId), {
@@ -268,15 +281,15 @@ class ChatService {
     try {
       const updateData: any = {
         status,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        adminId,
+        adminName
       };
 
-      if (adminId && adminName) {
-        updateData.adminId = adminId;
-        updateData.adminName = adminName;
-      }
+      // Limpar campos undefined antes de enviar para o Firestore
+      const cleanedUpdateData = cleanObject(updateData);
 
-      await updateDoc(doc(this.chatsCollection, chatId), updateData);
+      await updateDoc(doc(this.chatsCollection, chatId), cleanedUpdateData);
 
       // Enviar mensagem do sistema sobre mudança de status
       if (status === 'closed') {
