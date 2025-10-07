@@ -250,6 +250,23 @@ export default function AdminManagePage() {
     }
   };
 
+  // Migration Function
+  const handleMigrateProducts = async () => {
+    if (!confirm('Tem certeza que deseja migrar/atualizar os produtos do menu? Isso substituirá todos os produtos existentes no Firebase.')) {
+      return;
+    }
+
+    try {
+      const { migrateRealMenuToFirebase } = await import('../utils/migrateProducts');
+      const result = await migrateRealMenuToFirebase();
+      alert(`Migração concluída! ${result.successCount} produtos migrados com sucesso.`);
+      window.location.reload(); // Recarregar a página para atualizar os dados
+    } catch (error) {
+      console.error('Erro na migração:', error);
+      alert('Erro ao migrar produtos. Verifique o console para mais detalhes.');
+    }
+  };
+
   const handleDeleteCategory = (categoryToDelete: string) => {
     // Verificar se há produtos usando esta categoria
     const productsUsingCategory = products.filter(product => product.category === categoryToDelete);
@@ -1035,6 +1052,30 @@ export default function AdminManagePage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Gerenciamento do Banco de Dados
           </h2>
+          
+          {/* Migration Section */}
+          <Card className="mb-6 border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Upload size={20} />
+                Atualizar Produtos do Menu
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-orange-800 mb-4">
+                Execute esta migração para atualizar os produtos no Firebase com os novos caminhos das imagens.
+                <br />
+                <strong>⚠️ Atenção:</strong> Isso substituirá todos os produtos existentes no banco de dados.
+              </p>
+              <button 
+                onClick={handleMigrateProducts}
+                className="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center justify-center gap-2"
+              >
+                <Upload size={18} />
+                Migrar Produtos para Firebase
+              </button>
+            </CardContent>
+          </Card>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Backup */}
