@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../components';
 import type { RegisterData } from '../types';
-import HotBoxLogo from '../assets/images/hotbox2.png';
+// import HotBoxLogo from '../assets/images/hotbox2.png';
 
 export function RegisterPage() {
   const { register: registerUser, isAuthenticated, loading } = useAuth();
@@ -80,7 +80,7 @@ export function RegisterPage() {
         <div className="text-center">
           <Link to="/" className="flex items-center justify-center mb-6">
             <img 
-              src={HotBoxLogo} 
+              src="/images/hotbox2.png" 
               alt="HotBox" 
               className="h-16" 
             />

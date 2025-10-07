@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, LogOut, Home, Package, Boxes, DollarSign, ShoppingBag, Settings } from 'lucide-react';
 import { useAuth, useCart } from '../../contexts';
 import { Button } from '../ui';
-import HotBoxIcon from '../../assets/images/hotbox2.png';
+// import HotBoxIcon from '../../assets/images/hotbox2.png';
 
 export function Header() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -24,7 +24,7 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
           <img 
-            src={HotBoxIcon} 
+            src="/images/hotbox2.png" 
             alt="HotBox" 
             className="h-16 w-16" 
           />
